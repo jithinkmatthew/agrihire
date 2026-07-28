@@ -5,7 +5,7 @@ and land are rented across New Zealand. It connects farmers, landowners, rental
 companies, and dealers in one easy-to-use system, allowing them to list, manage, and
 rent out agricultural equipment and land.
 
-### Production URL - Please click [here](http://agrihirenz.australiaeast.cloudapp.azure.com)
+### Production URL - 
 
 
 ## Test Users
@@ -133,5 +133,3 @@ Sample Response look like this
 
 
 Overview - Nominatim 5.1.0 Manual. (2025). Nominatim.org. https://nominatim.org/release-docs/latest/api/Overview/
-
-‌
