@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Page{% endblock %}
+
+{% block content %}
+
+<style>
+  .dollar {
+    font-size: 25px;
+  }
+
+  #payment_mode {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    align-items: center;
+  }
+
+  #payment_mode li {
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+  }
+
+  #payment_mode li input[type="radio"] {
+    margin-right: 5px;
+    /* Space between radio and label */
+  }
+</style>
+
+<div class="container">
+  <h1 class="h3 mb-5">Payment</h1>
+  <div class="row">
+    <div class="col-md-7">
+      <form action="{{ url_for('order.equipment_order_confirmation', equip_id=equipment[0].equipment_id) }}" method="POST">
+        {{ paymentform.hidden_tag() }}
+        <div class="card">
+          <div class="card-body m-3">
+            <div class="row">
+              <div class="col-md-6">
+                {{ paymentform.payment_mode(class="form-control border-0") }}
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-md">
+                {{ paymentform.card_number.label }}
+                {{ paymentform.card_number(class="form-control", required=True) }}
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-md-6">
+                {{ paymentform.card_holder_name.label }}
+                {{ paymentform.card_holder_name(class="form-control", required=True) }}
+              </div>
+              <div class="col-md-3">
+                {{ paymentform.card_exp_date.label }}
+                {{ paymentform.card_exp_date(class="form-control", required=True) }}
+              </div>
+              <div class="col-md-3">
+                {{ paymentform.card_cvv.label }}
+                {{ paymentform.card_cvv(class="form-control", type="password", minlength="3", required=True) }}
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-md">
+                {{ paymentform.place_order_btn(class="form-control btn btn-primary") }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="col-md-5">
+      <div class="card top-0">
+        <div class="p-3 bg-light bg-opacity-10">
+          <h6 class="card-title mb-3">Order Recap</h6>
+          {% set eqp_img = equipment_files | selectattr('file_type', '==', 'image') |
+          selectattr('equipment_id', '==', equipment[0].equipment_id) | list %}
+          <div class="card mb-3" style="max-width: 540px;">
+            <div class="row g-0">
+              <div class="col-md-4">
+                <img class="img-fluid rounded-start"
+                  src="{{ url_for('static', filename=eqp_img[0].file_path) if eqp_img and eqp_img[0].file_path else url_for('static', filename='defaultimage.jpg') }}"
+                  alt="Equipment Image">
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <p class="card-text">{{equipment[0].name}}</p>
+                  {% if order_info.rental_duration_days %}
+                  <p class="card-text">Duration : {{ order_info.rental_duration_days }}(Days)</p>
+                  {% endif %}
+                  {% if order_info.rental_duration_hours %}
+                  <p class="card-text">Duration : {{ order_info.rental_duration_hours }}(Hours)</p>
+                  {% endif %}
+                  {% if order_info.rental_rate %}
+                  <p class="card-text"> Rate : {{ order_info.rental_rate }} </p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% if order_info.rental_duration_days %}
+          <div class="d-flex justify-content-between mb-1 small">
+            <span>Subtotal</span> <span>{{order_info.rental_duration_days * order_info.rental_rate}}</span>
+          </div>
+          {% endif %}
+          {% if order_info.rental_duration_hours %}
+          <div class="d-flex justify-content-between mb-1 small">
+            <span>Subtotal</span> <span>{{order_info.rental_duration_hours * order_info.rental_rate}}</span>
+          </div>
+          {% endif %}
+          {% if order_info.rental_delivery_service == 'address'%}
+          <div class="d-flex justify-content-between mb-1 small">
+            <span>Delivery</span> <span>{{order_info.rental_delivery_amount}}</span>
+          </div>
+          {% endif %}
+          <hr>
+          <div class="d-flex justify-content-between mb-4 small">
+            <span>Grant Total</span> <strong class="text-dark">{{order_info.rental_grant_total}}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- <script src="{{ url_for('static', filename='js/equipment_category.js') }}"></script> -->
+  <!-- <script src="{{ url_for('static', filename='js/location.js') }}"></script> -->
+  <!-- <script src="{{ url_for('static', filename='js/leaflet_map.js') }}"></script> -->
+  <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+  <!-- <script src="{{ url_for('static', filename='js/order.js') }}"></script> -->
+
+  {% endblock %}

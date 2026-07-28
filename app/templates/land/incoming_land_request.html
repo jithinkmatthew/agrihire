@@ -1,0 +1,96 @@
+{% extends "base.html" %} {% block title %}My incoming Request{% endblock %} {%
+block content %}
+
+<!-- {% import "macros/rented_equipment_card.html" as rented_equipment_card %} -->
+
+<style>
+  .fixed-height-image {
+    height: 200px;
+    /* Adjust to your desired height */
+    overflow: hidden;
+  }
+
+  .fixed-height-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Ensures the image covers the container without distortion */
+  }
+
+  .fixed-image {
+    height: 150px;
+    object-fit: cover;
+  }
+
+
+  .dollar {
+    font-size: 25px;
+  }
+
+  .mapview {
+    height: 300px;
+    /* Or any other height you want */
+  }
+</style>
+
+<div class="container">
+  <h5 class="mb-4 text-primary fw-bold border-3 pb-2" style="letter-spacing: 1px; text-transform: uppercase;">
+      Incomimg Land Requests
+  </h5>
+    {% if active_requests_as_owner %}
+    <!-- <div class="row"> -->
+      {% for act_request in active_requests_as_owner %}
+      <!-- {{request}} -->
+      <!-- <div class="col-md"> -->
+      <div class="card m-4 border-0">
+        <div class="row g-0 rounded shadow">
+          <div class="col-md-4 d-flex align-items-center justify-content-center bg-light rounded fixed-image">
+            {% if image_file %}
+            <img class="card-img-top img-fluid rounded fixed-image"
+              src="{{ url_for('static', filename=request.file_path) }}" alt="Land Image" />
+            {% else %}
+            <i class="bi bi-image" style="font-size: 150px; color: #7e7e7eb3;"></i>
+            {% endif %}
+          </div>
+          <div class="col-md-8">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">{{ act_request.land_parcel_name }}</h5>
+              </div>
+              <div class="card-text">
+                <span class="fs-6">{{ act_request.tenant_first_name}}  {{act_request.tenant_last_name}} </span>
+                <div class="text-muted">{{act_request.tenant_email}} </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="card-texsafetyt">
+                  <small class="text-muted">Requested on: {{ act_request.created_at }} </small>
+                </div>
+                <div class="my-1">
+                  <a class="btn btn-primary mx-2"
+                    href="{{ url_for('land.view_land_request_as_owner', parcel_req_id=act_request.application_id) }}">View Request</a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- </div> -->
+      {% endfor %}
+    <!-- </div> -->
+    {% else %}
+    <div class="card shadow-sm text-center mx-auto bg-light border-0" style="max-width: 800px; padding: 40px;">
+        <div class="mb-3">
+          <i class="bi bi-geo-alt-off-fill" style="font-size: 3rem; color: #6c757d;"></i>
+        </div>
+        <h4 class="card-title mb-2">No Requests Yet</h4>
+        <p class="card-text text-muted mb-4">You haven’t received any land requests. Once someone applies for your land, it will show up here.</p>
+      </div>  
+    {% endif %}
+</div>
+
+
+
+<script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+
+{% endblock %}

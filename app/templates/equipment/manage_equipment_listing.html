@@ -1,0 +1,746 @@
+{% extends "base.html" %}
+
+{% block title %}Add Equipment{% endblock %}
+
+{% block content %}
+
+{% import "macros/equipment_preview_modal.html" as equipment_preview_modal %}
+{% import "macros/rented_equipment_card.html" as rented_equipment_card %}
+
+<style>
+  .card-img-fixed-height {
+    height: 200px;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .card-img-fixed-height img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* nav */
+  .card {
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+  }
+
+  a.active {
+    border-bottom: 2px solid #0d6efd;
+  }
+
+  #equip_tab .nav-link {
+    color: rgb(110, 110, 110);
+    font-weight: 500;
+  }
+
+  #equip_tab .nav-link:hover {
+    color: #0d6efd;
+  }
+
+  #equip_tab.nav-pills .nav-link.active {
+    color: black;
+    background-color: white;
+    border-radius: 10px 10px 0 0;
+    font-weight: 600;
+  }
+
+  .tab-content {
+    padding-bottom: 10px;
+  }
+
+  .form-control {
+    background-color: rgb(241, 243, 247);
+    border: none;
+  }
+
+  .btn-success {
+    float: right;
+  }
+
+  .form-control:focus {
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset, 0px 0px 7px rgba(0, 0, 0, 0.2);
+  }
+
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: "";
+  }
+
+  .search {
+    padding: 0 1rem 0 1rem;
+  }
+
+  .fixed-image {
+    height: 255px;
+    object-fit: cover;
+  }
+
+  .preview-image {
+    width: 100%;
+    height: 350px;
+    object-fit: cover;
+  }
+
+  #map {
+    height: 300px;
+    width: 100%;
+  }
+
+  .mapview {
+    height: 200px;
+  }
+</style>
+
+<!-- <h4 class="fw-bold text-secondary"></h4> -->
+<div class="container">
+  <h5 class="mb-4 text-primary fw-bold border-3 pb-2" style="letter-spacing: 1px; text-transform: uppercase;">
+      Manage Equipment Listing
+  </h5>
+  <ul class="nav nav-pills mb-3 shadow-sm" id="equip_tab" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" id="pills-manage-tab" data-bs-toggle="pill" href="#pills-manage" role="tab"
+        aria-controls="pills-manage" aria-selected="true">Published Listings</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="pills-hired-tab" data-bs-toggle="pill" href="#pills-hired" role="tab"
+        aria-controls="pills-hired" aria-selected="false">Rented Out</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="pills-unpublished-tab" data-bs-toggle="pill" href="#pills-unpublished" role="tab"
+        aria-controls="pills-unpublished" aria-selected="false">Drafts</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="pills-add-tab" data-bs-toggle="pill" href="#pills-add" role="tab"
+        aria-controls="pills-add" aria-selected="false">Add New</a>
+    </li>
+  </ul>
+  <div class="tab-content p-3" id="pills-tabContent">
+    <!-- 1st card -->
+    <div class="tab-pane fade show active" id="pills-manage" role="tabpanel" aria-labelledby="pills-manage-tab">
+      {% if equipments %}
+      <div>
+        <h5 class="m-4">Published Equipments</h5>
+        {% set published_equipments = equipments | selectattr('is_public', '==', 1) | selectattr('is_hired', '==', 0) |list%}
+        {% for equipment in published_equipments %}
+
+        {% set image_file = equipments_files | selectattr('equipment_id', '==', equipment.equipment_id) |
+        selectattr('file_type', '==', 'image') | first %}
+
+        {% set safety_docs = equipments_files | selectattr('file_type', '==', 'safety_doc') |
+        selectattr('equipment_id', '==', equipment.equipment_id) | list %}
+
+        {% set equip_safety_options = safety_options_for_display | selectattr('equipment_id', '==',
+        equipment.equipment_id) | list%}
+
+        <div class="card m-4">
+          <div class="row g-0 rounded shadow">
+            <div class="col-md-4">
+              {% if image_file %}
+              <img class="card-img-top img-fluid rounded fixed-image"
+                src="{{ url_for('static', filename=image_file.file_path) }}" alt="Equipment Image">
+              {% else %}
+              <img class="card-img-top img-fluid rounded fixed-image"
+                src="{{ url_for('static', filename='defaultimage.jpg') }}" alt="Equipment Image">
+              {% endif %}
+            </div>
+            <div class="col-md-8">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="card-title mb-0">{{ equipment.name }}</h5>
+                  <span class="badge rounded-pill bg-success"><i class="bi bi-globe-americas"></i> Published</span>
+                </div>
+                <p class="card-text"><i class="bi bi-collection"></i> {{equipment.category_name}}</p>
+                <div class="d-flex align-items-center mb-2">
+                  <div class="card-text"><i class="bi bi-shield-check"></i> {{equipment.make}}</div>
+                  <div class="card-text mx-2"><i class="bi bi-bookmark"></i> {{equipment.model}}</div>
+                </div>
+                <p class="card-text">{{equipment.description}}</p>
+                <p class="card-text"><small class="text-muted">Last updated: {{
+                    equipment.updated_date.strftime("%d-%m-%Y %I:%M %p") }}</small></p>
+                <div class="d-flex align-items-center mb-2 gap-3">
+                  <div>
+                    <form method="POST"
+                      action="{{ url_for('equipment.unpublish_equipment', equip_id=equipment.equipment_id) }}"
+                      style="display:inline;">
+                      {{ unpublish_form.hidden_tag() }}
+                      <button type="submit" class="btn btn-sm btn-outline-primary"
+                        onclick="return confirm('Are you sure?');">
+                        <i class="bi bi-ban"></i> UnPublish
+                      </button>
+                    </form>
+                  </div>
+                  <a id="equip_preview" class="btn btn-sm btn-outline-primary preview-btn" data-bs-toggle="modal"
+                    data-bs-target="#previewModal_{{ equipment.equipment_id }}"
+                    data-id="{{ equipment.equipment_id }}"><i class="bi bi-eye"></i> Preview</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {{ equipment_preview_modal.equipment_preview_modal(equipment, equipments_files, safety_options_for_display) }}
+        {% endfor %}
+      </div>
+
+      {% else %}
+      <div class="row"> No equipments to display</div>
+      {% endif %}
+    </div>
+    <!-- 2nd card -->
+    <div class="tab-pane fade" id="pills-hired" role="tabpanel" aria-labelledby="pills-hired-tab">
+      {% if active_rentals_as_owner %}
+      <div class="row">
+        <h5 class="m-4">Rented Out Equipments</h5>
+        {% for equipment in active_rentals_as_owner %}
+        {% set image_file = equipments_files | selectattr('equipment_id', '==', equipment.equipment_id) |
+        selectattr('file_type', '==', 'image') | first %}
+        <div>
+          {{ rented_equipment_card.rented_equipment_card(equipment, image_file, manage_request_form='', view_modal=False) }}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="row"> No equipments to display</div>
+      {% endif %}
+    </div>
+    <!-- 3rd card -->
+    <div class="tab-pane fade" id="pills-unpublished" role="tabpanel" aria-labelledby="pills-unpublished-tab">
+      {% set unpublished_equipments = equipments | selectattr('is_public', '==', 0) | selectattr('is_hired', '==', 0) | list%}
+      {% if unpublished_equipments %}
+      <div class="row">
+        <h5 class="m-4">Unpublished Equipments</h5>
+        {% for equipment in unpublished_equipments %}
+        {% set image_file = equipments_files | selectattr('equipment_id', '==', equipment.equipment_id) |
+        selectattr('file_type', '==', 'image') | first %}
+        <div class="col-md">
+          <div class="card m-4">
+            <div class="row g-0 rounded shadow">
+              <div class="col-md-4">
+                {% if image_file %}
+                <img class="card-img-top img-fluid rounded fixed-image"
+                  src="{{ url_for('static', filename=image_file.file_path) }}" alt="Equipment Image">
+                {% else %}
+                <img class="card-img-top img-fluid rounded fixed-image"
+                  src="{{ url_for('static', filename='defaultimage.jpg') }}" alt="Equipment Image">
+                {% endif %}
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ equipment.name }}</h5>
+                    <span class="badge rounded-pill bg-warning text-dark"><i class="bi bi-globe-americas"></i>
+                      UnPublished</span>
+                  </div>
+                  <p class="card-text"><i class="bi bi-collection"></i> {{equipment.category_name}}</p>
+                  <div class="d-flex align-items-center mb-2">
+                    <div class="card-text"><i class="bi bi-shield-check"></i> {{equipment.make}}</div>
+                    <div class="card-text mx-2"><i class="bi bi-bookmark"></i> {{equipment.model}}</div>
+                  </div>
+                  <p class="card-text">{{equipment.description}}</p>
+                  <p class="card-text"><small class="text-muted">Last updated: {{
+                      equipment.updated_date.strftime("%d-%m-%Y %I:%M %p") }}</small></p>
+                  <div class="d-flex align-items-center mb-2 gap-3">
+                    <a id="equip_edit" class="btn btn-sm btn-outline-primary preview-btn edit-btn"
+                      data-bs-toggle="modal" data-bs-target="#editModal_{{ equipment.equipment_id }}"
+                      data-id="{{ equipment.equipment_id }}"><i class="bi bi-pencil-square"></i> Edit</a>
+                    <div>
+                      <form method="POST"
+                        action="{{ url_for('equipment.publish_equipment', equip_id=equipment.equipment_id) }}"
+                        style="display:inline;">
+                        {{ publish_form.hidden_tag() }}
+                        <button type="submit" class="btn btn-sm btn-outline-primary"
+                          onclick="return confirm('Are you sure?');">
+                          <i class="bi bi-globe-americas"></i> Publish
+                        </button>
+                      </form>
+                    </div>
+                    <div>
+                      <form method="POST"
+                        action="{{ url_for('equipment.delete_equipment', equip_id=equipment.equipment_id) }}"
+                        style="display:inline;">
+                        {{ delete_form.hidden_tag() }}
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                          onclick="return confirm('Are you sure?');">
+                          <i class="bi bi-trash"></i> Delete
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal fade" id="editModal_{{ equipment.equipment_id }}" data-lat="{{ equipment.latitude }}"
+            data-lon="{{ equipment.longitude }}" tabindex="-1"
+            aria-labelledby="previewModalLabel_{{ equipment.equipment_id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <div class="d-flex flex-column">
+                    <h5 class="modal-title" id="previewModalLabel_{{ equipment.equipment_id }}">Equipment Edit </h5>
+                    <small class="text-muted">Edit detail before you publish to the user</small>
+                  </div>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <form method="POST"
+                    action="{{ url_for('equipment.edit_equipment', equipment_id=equipment.equipment_id) }}"
+                    data-equipment-id={{equipment.equipment_id}} data-category-id={{equipment.sub_category_parent_id}}
+                    data-sub-category-id={{equipment.sub_category_id}}
+                    data-existing-region-id={{equipment.district_region_id}}
+                    data-existing-district-id={{equipment.suburb_district_id}}
+                    data-existing-suburb-id={{equipment.suburb_id}} class="edit_equipment_form needs-validation"
+                    enctype="multipart/form-data">
+                    {{ equipment_forms[equipment.equipment_id].hidden_tag() }}
+                    <h5 class="fw-light text-secondary">Basic Information</h5>
+                    <div class="row">
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_name.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_name(class="form-control") }}
+                      </div>
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_make.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_make(class="form-control") }}
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_model.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_model(class="form-control") }}
+                      </div>
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_year.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_year(class="form-control") }}
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="mb-3 col-md-6" data-existing-category-id={{equipment.sub_category_parent_id}}>
+                        {{ equipment_forms[equipment.equipment_id].equipment_category.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_category(class="form-control",
+                        id="edit-categories_" ~ equipment.equipment_id) }}
+                      </div>
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_sub_category.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_sub_category(class="form-control",
+                        id="edit-subcategories_" ~ equipment.equipment_id) }}
+                      </div>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                      {{ equipment_forms[equipment.equipment_id].equipment_description.label }}
+                      {{ equipment_forms[equipment.equipment_id].equipment_description(class="form-control") }}
+                    </div>
+                    <!-- Equipment Price details -->
+                    <h5 class="fw-light text-secondary">Price Details</h5>
+                    <div class="row">
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_price.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_price(class="form-control") }}
+                      </div>
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_price_modal.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_price_modal(class="form-control") }}
+                      </div>
+                    </div>
+                    <!-- Location Details -->
+                    <h5 class="fw-light text-secondary">Location Details</h5>
+                    <div class="row">
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].location_region.label }}
+                        {{ equipment_forms[equipment.equipment_id].location_region(class="form-control",
+                        id="edit_equip_region_" ~ equipment.equipment_id) }}
+                      </div>
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].location_district.label }}
+                        {{ equipment_forms[equipment.equipment_id].location_district(class="form-control",
+                        id="edit_equip_district_" ~ equipment.equipment_id) }}
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].location_suburbs.label }}
+                        {{ equipment_forms[equipment.equipment_id].location_suburbs(class="form-control",
+                        id="edit_equip_suburb_" ~ equipment.equipment_id) }}
+                      </div>
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].location_street_name.label }}
+                        {{ equipment_forms[equipment.equipment_id].location_street_name(class="form-control",
+                        id="edit_equip_street_" ~ equipment.equipment_id) }}
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].location_city.label }}
+                        {{ equipment_forms[equipment.equipment_id].location_city(class="form-control",
+                        id="edit_equip_city_" ~ equipment.equipment_id) }}
+                      </div>
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].location_zip.label }}
+                        {{ equipment_forms[equipment.equipment_id].location_zip(class="form-control",
+                        id="edit_equip_zip_" ~ equipment.equipment_id)
+                        }}
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="mb-3 col-md-4">
+                        {{ equipment_forms[equipment.equipment_id].location_gps_coordinate.label }}
+                        {{ equipment_forms[equipment.equipment_id].location_gps_coordinate(class="form-control",
+                        id="edit_equip_gpscoordinate_" ~ equipment.equipment_id) }}
+                      </div>
+                      <!-- <div class="mb-3 col-md-2 d-flex align-items-end">
+                      {{ equipment_forms[equipment.equipment_id].location_get_coordinates_btn(class="btn btn-primary",
+                      id="edit_equip_getcoordinate_btn_" ~ equipment.equipment_id) }}
+                    </div> -->
+                      <div class="mb-3 col-md-2 d-flex align-items-end">
+                        <a id="edit_equip_getcoordinate_btn_{{equipment.equipment_id}}" href="#">Get GPS Coordinates</a>
+                      </div>
+                    </div>
+                    <div id="map_{{equipment.equipment_id}}" class="my-2 mapview rounded"></div>
+                    <h5 class="fw-light text-secondary">Specifications</h5>
+                    <div class="row">
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_height.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_height(class="form-control") }}
+                      </div>
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_length.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_length(class="form-control") }}
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_width.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_width(class="form-control") }}
+                      </div>
+                      <div class="mb-3 col-md-6">
+                        {{ equipment_forms[equipment.equipment_id].equipment_weight.label }}
+                        {{ equipment_forms[equipment.equipment_id].equipment_weight(class="form-control") }}
+                      </div>
+                    </div>
+                    <h5 class="fw-light text-secondary">Safety</h5>
+                    <div class="mb-3 col-md-6">
+                      {{ equipment_forms[equipment.equipment_id].safety_equipments.label }}
+                      {{ equipment_forms[equipment.equipment_id].safety_equipments(class="form-control") }}
+                    </div>
+                    <div class="mb-3 col-md-6">
+                      {{ equipment_forms[equipment.equipment_id].safety_docs.label }}
+                      {{ equipment_forms[equipment.equipment_id].safety_docs(class="form-control",
+                      id="equip_edit_safety_doc_upload_btn_" ~ equipment.equipment_id) }}
+
+                      {% set safedoc_filename = equipment_forms[equipment.equipment_id].safety_docs.data %}
+                      {% if safedoc_filename %}
+                      <div class="card rounded shadow-sm mt-3"
+                        id="equip_edit_safety_doc_view_{{equipment.equipment_id}}">
+                        <div class="card-body bg-light">
+                          <div class="d-flex flex-column">
+                            <small class="text-muted"><i class="bi bi-file-earmark-pdf"></i> Safety Documentation
+                              Available</small>
+                            <a href="{{ url_for('static', filename=safedoc_filename[0]) }}" download>Download File</a>
+                          </div>
+                        </div>
+                      </div>
+                      {% endif %}
+                    </div>
+                    <h5 class="fw-light text-secondary">Equipment Image</h5>
+                    <div class="mb-3 col-md-6">
+                      {{ equipment_forms[equipment.equipment_id].equipment_image.label }}
+                      {{ equipment_forms[equipment.equipment_id].equipment_image(class="form-control",
+                      id="equip_edit_image_upload_btn_" ~ equipment.equipment_id) }}
+
+                      {% set equip_image_filename = equipment_forms[equipment.equipment_id].equipment_image.data %}
+                      {% if equip_image_filename %}
+                      <div class="border mt-3 rounded" id="equip_edit_image_view_{{equipment.equipment_id}}">
+                        <img class="card-img-top img-fluid rounded"
+                          src="{{ url_for('static', filename=equip_image_filename[0]) }}" alt="Equipment Image">
+                      </div>
+                      {% endif %}
+                    </div>
+                    {{ form.add_equipment_btn(class="btn btn-primary", id="edit_equipment_" ~ equipment.equipment_id,
+                    value="Edit") }}
+                  </form>
+                </div>
+                <!-- Preview Map -->
+                <div id="map_{{equipment.equipment_id}}" class="my-2 mapview rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="row"> No equipments to display</div>
+      {% endif %}
+    </div>
+    <!-- 4nd card -->
+    <div class="tab-pane fade add_equipment needs-validation" id="pills-add" role="tabpanel" aria-labelledby="pills-add-tab">
+      <form method="POST" action="{{ url_for('equipment.add_new_equipment') }}" class="add_equipment_form"
+        id="add_equipment" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <h5 class="fw-light text-secondary">Basic Information</h5>
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_name.label(class="form-label fw-light") }}
+            {{ form.equipment_name(class="form-control") }}
+            {% for error in form.equipment_name.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_make.label(class="form-label fw-light") }}
+            {{ form.equipment_make(class="form-control") }}
+            {% for error in form.equipment_make.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_model.label(class="form-label fw-light") }}
+            {{ form.equipment_model(class="form-control") }}
+            {% for error in form.equipment_model.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_year.label(class="form-label fw-light") }}
+            {{ form.equipment_year(class="form-control") }}
+            {% for error in form.equipment_year.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_category.label(class="form-label fw-light") }}
+            {{ form.equipment_category(class="form-control", id="equipment_category") }}
+            {% for error in form.equipment_category.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_sub_category.label(class="form-label fw-light") }}
+            {{ form.equipment_sub_category(class="form-control", id="equipment_subcategory") }}
+            {% for error in form.equipment_sub_category.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="mb-3 col-md-6">
+          {{ form.equipment_description.label(class="form-label fw-light") }}
+          {{ form.equipment_description(class="form-control") }}
+          {% for error in form.equipment_description.errors %}
+          <div class="text-danger">{{ error }}</div>
+          {% endfor %}
+        </div>
+        <h5 class="fw-light text-secondary">Price Details</h5>
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_price.label(class="form-label fw-light") }}
+            {{ form.equipment_price(class="form-control") }}
+            {% for error in form.equipment_price.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_price_modal.label(class="form-label fw-light") }}
+            {{ form.equipment_price_modal(class="form-control") }}
+            {% for error in form.equipment_price_modal.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <h5 class="fw-light text-secondary">Location Details</h5>
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            {{ form.location_region.label(class="form-label fw-light") }}
+            {{ form.location_region(class="form-control", id="add_equipment_region") }}
+            {% for error in form.location_region.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3 col-md-6">
+            {{ form.location_district.label(class="form-label fw-light") }}
+            {{ form.location_district(class="form-control", id="add_equipment_district") }}
+            {% for error in form.location_district.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            {{ form.location_suburbs.label(class="form-label fw-light") }}
+            {{ form.location_suburbs(class="form-control", id="add_equipment_suburb") }}
+            {% for error in form.location_suburbs.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3 col-md-6">
+            {{ form.location_street_name.label(class="form-label fw-light") }}
+            {{ form.location_street_name(class="form-control", id="add_equipment_street_name") }}
+            {% for error in form.location_street_name.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            {{ form.location_city.label(class="form-label fw-light") }}
+            {{ form.location_city(class="form-control", id="add_equipment_city") }}
+            {% for error in form.location_city.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3 col-md-6">
+            {{ form.location_zip.label(class="form-label fw-light") }}
+            {{ form.location_zip(class="form-control", id="add_equipment_zip") }}
+            {% for error in form.location_zip.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="mb-3 col-md-4">
+            {{ form.location_gps_coordinate.label(class="form-label fw-light") }}
+            {{ form.location_gps_coordinate(class="form-control", id="add_equip_geo_coordinate") }}
+            {% for error in form.equipment_model.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3 col-md-2 d-flex align-items-end">
+            <a id="add_equip_get_coordinates_btn" href="#">Get GPS Coordinates</a>
+          </div>
+        </div>
+        <div id="map" class="my-2"></div>
+        <h5 class="fw-light text-secondary">Specifications</h5>
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_height.label(class="form-label fw-light") }}
+            {{ form.equipment_height(class="form-control") }}
+          </div>
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_length.label(class="form-label fw-light") }}
+            {{ form.equipment_length(class="form-control") }}
+          </div>
+        </div>
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_width.label(class="form-label fw-light") }}
+            {{ form.equipment_width(class="form-control") }}
+          </div>
+          <div class="mb-3 col-md-6">
+            {{ form.equipment_weight.label(class="form-label fw-light") }}
+            {{ form.equipment_weight(class="form-control") }}
+          </div>
+        </div>
+        <h5 class="fw-light text-secondary">Safety</h5>
+
+        <div class="mb-3 col-md-6">
+          {{ form.safety_equipments.label(class="form-label fw-light") }}
+          {{ form.safety_equipments(class="form-control") }}
+        </div>
+        <div class="mb-3 col-md-6">
+          {{ form.safety_docs.label(class="form-label fw-light") }}
+          {{ form.safety_docs(class="form-control") }}
+          {% for error in form.safety_docs.errors %}
+          <div class="text-danger">{{ error }}</div>
+          {% endfor %}
+        </div>
+        <h5 class="fw-light text-secondary">Equipment Image</h5>
+        <div class="mb-3 col-md-6">
+          {{ form.equipment_image.label(class="form-label fw-light") }}
+          {{ form.equipment_image(class="form-control") }}
+          {% for error in form.equipment_image.errors %}
+          <div class="text-danger">{{ error }}</div>
+          {% endfor %}
+        </div>
+        {{ form.add_equipment_btn(class="btn btn-primary") }}
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Select all inputs whose IDs start with prefix
+    const inputs = document.querySelectorAll("input[id^='equip_edit_safety_doc_upload_btn_']");
+
+    console.log(inputs)
+
+    inputs.forEach(input => {
+      // Extract equipment_id from the ID
+      const equipId = input.id.replace("equip_edit_safety_doc_upload_btn_", "");
+      const doc_card = document.getElementById("equip_edit_safety_doc_view_" + equipId);
+
+      console.log('clicked', doc_card)
+
+      if (!doc_card) return; // skip if no card exists for this equipId
+
+      input.addEventListener("change", function () {
+        if (this.files && this.files.length > 0) {
+          doc_card.classList.add("d-none");
+        }
+        else {
+          card.classList.remove("d-none");
+        }
+      });
+    });
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Select all inputs whose IDs start with prefix
+    const inputs = document.querySelectorAll("input[id^='equip_edit_image_upload_btn_']");
+
+    console.log(inputs)
+
+    inputs.forEach(input => {
+      // Extract equipment_id from the ID
+      const equipId = input.id.replace("equip_edit_image_upload_btn_", "");
+      const doc_card = document.getElementById("equip_edit_image_view_" + equipId);
+
+      console.log('clicked', doc_card)
+
+      if (!doc_card) return; // skip if no card exists for this equipId
+
+      input.addEventListener("change", function () {
+        if (this.files && this.files.length > 0) {
+          doc_card.classList.add("d-none");
+        }
+        else {
+          card.classList.remove("d-none");
+        }
+      });
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // Restore active tab from localStorage
+    const activeTabId = localStorage.getItem('activeEquipTab');
+    if (activeTabId) {
+      const triggerEl = document.querySelector(`#equip_tab a[href="${activeTabId}"]`);
+      if (triggerEl) {
+        const tab = new bootstrap.Tab(triggerEl);
+        tab.show();
+      }
+    }
+
+    // Save active tab to localStorage when switched
+    const tabLinks = document.querySelectorAll('#equip_tab a[data-bs-toggle="pill"]');
+    tabLinks.forEach(tabLink => {
+      tabLink.addEventListener('shown.bs.tab', function (event) {
+        localStorage.setItem('activeEquipTab', event.target.getAttribute('href'));
+      });
+    });
+  });
+
+</script>
+
+<script src="{{ url_for('static', filename='js/equipment_category.js') }}"></script>
+<script src="{{ url_for('static', filename='js/location.js') }}"></script>
+<script src="{{ url_for('static', filename='js/leaflet_map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Add Equipment{% endblock %}
+
+{% block content %}
+
+<style>
+  .fixed-height-image {
+    height: 300px;
+    /* Adjust to your desired height */
+    overflow: hidden;
+  }
+
+  .fixed-height-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Ensures the image covers the container without distortion */
+  }
+
+  .dollar {
+    font-size: 25px;
+  }
+
+  .mapview {
+    height: 300px;
+    /* Or any other height you want */
+  }
+</style>
+
+<div class="container py-2">
+  <div class="row">
+    <div class="col-md-2">
+      <a href="{{ url_for('search.search_assets', **session.get('last_equipment_search', {})) }}"
+        class="btn btn-secondary">← Back to results</a>
+    </div>
+  </div>
+  <div class="row mt-3">
+    <div class="col-md-7">
+      <!-- <div class="row"> -->
+      {% set eqp_img = equipment_files | selectattr('file_type', '==', 'image') | first %}
+      <div class="card rounded shadow-sm mb-3 p-0">
+        <div class="card-body bg-light p-0 rounded fixed-height-image">
+          {% if eqp_img %}
+          <img class="img-fluid preview-image rounded" src="{{ url_for('static', filename=eqp_img.file_path) }}"
+            alt="Equipment Image">
+          {% else %}
+          <img class="img-fluid preview-image rounded" src="{{ url_for('static', filename='default_image.jpg') }}"
+            alt="Default Image">
+          {% endif %}
+        </div>
+      </div>
+      <div class="d-flex justify-content-between">
+        <div>
+          <h3 class="fw-bold text-dark">{{ equipment[0].name }}</h3>
+          <h5 class="text-dark text-muted">{{ equipment[0].make }} {{equipment[0].model}} ({{equipment[0].year}})</h5>
+        </div>
+        <div class="d-flex flex-column align-items-start">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-currency-dollar fw-bold dollar"></i>
+            <div class="fw-bold fs-4">{{ equipment[0].price }}</div>
+          </div>
+          {% if equipment[0].price_modal == 'per_hour' %}
+          <div class="px-2"><small class="text-muted">per hour</small></div>
+          {% elif equipment[0].price_modal == 'per_day' %}
+          <div class="px-2"><small class="text-muted">per day</small></div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="d-flex">
+        {{ equipment[0].suburb }}, {{ equipment[0].region }}
+      </div>
+      <h6 class="fw-bold text-dark mt-4">Description</h6>
+      <p>{{ equipment[0].description }}</p>
+      <h6 class="fw-bold text-dark mt-4">Equipment Specification</h6>
+      <div class="d-flex gap-3">
+        <div class="card rounded shadow-sm">
+          <div class="card-body bg-light rounded">
+            <small class="text-muted">Height</small>
+            <h6>{{ equipment[0].height }}</h6>
+          </div>
+        </div>
+        <div class="card rounded shadow-sm">
+          <div class="card-body bg-light rounded">
+            <small class="text-muted">Length</small>
+            <h6>{{ equipment[0].length }}</h6>
+          </div>
+        </div>
+        <div class="card rounded shadow-sm">
+          <div class="card-body bg-light rounded">
+            <small class="text-muted">Width</small>
+            <h6>{{ equipment[0].width }}</h6>
+          </div>
+        </div>
+        <div class="card rounded shadow-sm">
+          <div class="card-body bg-light rounded">
+            <small class="text-muted">Weight</small>
+            <h6>{{ equipment[0].weight }}</h6>
+          </div>
+        </div>
+      </div>
+      <h6 class="fw-bold text-dark mt-3"><i class="bi bi-shield"></i> Safety Requirements</h6>
+      {% set equip_safety_options = safety_options_for_display | selectattr('equipment_id', '==',
+      equipment[0].equipment_id) | list %}
+      {% for safety_option in equip_safety_options %}
+      <div><i class="bi bi-check2-circle"></i> {{ safety_option.name }}</div>
+      {% endfor %}
+      <!-- Download Safety Docs -->
+      {% set safety_doc = equipment_files | selectattr('file_type', '==', 'safety_doc') |
+      selectattr('equipment_id', '==', equipment[0].equipment_id) | list %}
+      {% for doc in safety_doc %}
+      <div class="card rounded shadow-sm mt-3">
+        <div class="card-body bg-light">
+          <div class="d-flex flex-column">
+            <small class="text-muted"><i class="bi bi-file-earmark-pdf"></i> Safety Documentation
+              Available</small>
+            <a href="{{ url_for('static', filename=doc.file_path) }}" download>Download File</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      <!-- Location Details -->
+      <h6 class="fw-bold text-dark mt-3"><i class="bi bi-map"></i> Location Details</h6>
+      <div class="row">
+        <div class="col-6">
+          <small class="text-muted">Region</small>
+          <div>{{ equipment[0].region | default('-', true) }} </div>
+        </div>
+        <div class="col-6">
+          <small class="text-muted">District</small>
+          <div>{{ equipment[0].district | default('-', true) }} </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-6">
+          <small class="text-muted">Suburbs</small>
+          <div>{{ equipment[0].suburb | default('-', true) }} </div>
+        </div>
+        <div class="col-6">
+          <small class="text-muted">Street Name</small>
+          <div>{{ equipment[0].street_name | default('-', true) }} </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-6">
+          <small class="text-muted">City</small>
+          <div>{{ equipment[0].city | default('-', true) }} </div>
+        </div>
+        <div class="col-6">
+          <small class="text-muted">ZIP</small>
+          <div>{{ equipment[0].zip | default('-', true) }} </div>
+        </div>
+      </div>
+      <!-- Preview Map -->
+      <div id="map_view" class="my-2 mapview rounded" data-lat="{{equipment[0].latitude}}" ,
+        data-lon="{{equipment[0].longitude}}"></div>
+    </div>
+    <div class="col-md-5">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="fw-bold text-dark m-0">Book This Equipment</h5>
+          <small class="text-muted">Choose your rental period and pricing option</small>
+
+          <div>
+            <form class="mt-3" action="{{ url_for('order.equipment_order_payment', equip_id=equipment[0].equipment_id) }}"
+              method="POST">
+              {{ order_form.hidden_tag() }}
+              {{ weather_forecast_form.hidden_tag() }}
+              <!-- equipment/<int:equip_id>/order -->
+              {% set per_day_equip = equipment[0].price_modal %}
+              {% set per_hour_equip = equipment[0].price_modal %}
+              <div class="row">
+                <div class="mb-3 col-md-6">
+                  {{ order_form.equipment_rental_start_date.label }}
+                  {{ order_form.equipment_rental_start_date(class="form-control") }}
+                </div>
+                {% if equipment[0].price_modal == 'per_day'%}
+                <div class="mb-3 col-md-6">
+                  {{ order_form.equipment_rental_end_date.label }}
+                  {{ order_form.equipment_rental_end_date(class="form-control", required=True) }}
+                </div>
+                {% endif %}
+                </div>
+                {% if equipment[0].price_modal == 'per_hour'%}
+                <div class="row">
+                  <div class="mb-3 col-md-6">
+                    {{ order_form.equipment_rental_start_time.label }}
+                    {{ order_form.equipment_rental_start_time(class="form-control", id="equipment_rental_start_time", required=True) }}
+                  </div>
+                  <div class="mb-3 col-md-6">
+                    {{ order_form.equipment_rental_end_time.label }}
+                    {{ order_form.equipment_rental_end_time(class="form-control", id="equipment_rental_end_time", required=True) }}
+                  </div>
+                </div>
+                {% endif %}
+              <div class="row">
+                <div id="equip_site_location">
+                  {{ order_form.equipment_site_address.label }}
+                  {{ order_form.equipment_site_address(class="form-control", required=True) }}
+                </div>
+                <div class="form-check form-switch mt-3">
+                  {{ weather_forecast_form.equipment_weather_forecast(class="form-check-input") }}
+                  {{ weather_forecast_form.equipment_weather_forecast.label(class="form-check-label") }}
+                </div>
+                <!-- <div id="weather_forecast"></div> -->
+                <canvas id="tempChart" width="800" height="400"></canvas>
+                <div>
+                  {{ order_form.equipment_delivery_option.label }}
+                  {{ order_form.equipment_delivery_option(class="form-control border-0 list-unstyled") }}
+                </div>
+              </div>
+              <div class="card p-4 m-4 text-center shadow-sm">
+                <p class="card-text text-start fw-light">
+                  <i class="bi bi-box-seam"></i> Order Summary
+                </p>
+                <div id="order-summary">
+                  {% if equipment[0].price_modal == 'per_day'%}
+                  <div class="row">
+                    <div class="col-md-6 text-start"> Duration(Day): </div>
+                    <div class="col-md-6 text-end">
+                      {{ order_form.equipment_rental_days(class="form-control m-0 p-0 border-0 text-end",
+                      id="rental-duration", readonly=true) }}
+                    </div>
+                  </div>
+                  {% endif %}
+                  {% if equipment[0].price_modal == 'per_hour'%}
+                  <div class="row">
+                    <div class="col-md-6 text-start"> Duration(Hour): </div>
+                    <div class="col-md-6 text-end">
+                      {{ order_form.equipment_rental_hours(class="form-control m-0 p-0 border-0 text-end",
+                      id="rental-duration", readonly=true) }}
+                    </div>
+                  </div>
+                  {% endif %}
+                  <div class="row">
+                    <div class="col-md-6 text-start"> Equipment Rate: </div>
+                    <div class="col-md-6 text-end">
+                      {{ order_form.equipment_rental_rate(class="form-control m-0 p-0 border-0 text-end",
+                      id="equipment-rate", readonly=true, value=equipment[0].price) }}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 text-start"> Sub Total: </div>
+                    <div class="col-md-6 text-end" id="equipment-total">
+                      -
+                    </div>
+                  </div>
+                  <div class="row" id="equipment-delivery-amount-container">
+                    <div class="col-md-6 text-start">Delivery:</div>
+                    <div class="col-md-6 text-end">
+                      <h5 class="text-dark">
+                        {{ order_form.equipment_delivery_amount(class="form-control m-0 p-0 border-0 text-end",
+                        id="equipment-delivery-amount", readonly=true, value="50") }}
+                      </h5>
+                    </div>
+                  </div>
+                  <hr>
+                  <div class="row">
+                    <div class="col-md-6 text-start">Grant Total:</div>
+                    <div class="col-md-6 text-end">
+                      <h5 class="text-dark">
+                        {{ order_form.equipment_rental_grant_total(class="form-control m-0 p-0 border-0 text-end",
+                        id="grand-total-display", readonly=true) }}
+                      </h5>
+                    </div>
+                  </div>
+                </div>
+                <div class="row" id="order-summary-message">Please select date and time to see the summary details</div>
+              </div>
+              <!-- <div class="row"> -->
+              <div class="mt-3">
+                {{ order_form.equipment_payment_btn(class="btn btn-primary") }}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- equipment_rental_date = DateField('Rental Start Date', format='%Y-%m-%d', validators=[DataRequired()])   
+    # per hour    
+    equipment_rental_start_time = TimeField('Rental Start Time', format='%H:%M', validators=[DataRequired()])
+    equipment_rental_end_time = TimeField('Rental End Time', format='%H:%M', validators=[DataRequired()])   
+    # per day
+    equipment_rental_start_date = DateField('Rental Start Date', format='%Y-%m-%d', validators=[DataRequired()])
+    equipment_rental_end_date = DateField('Rental Start Date', format='%Y-%m-%d', validators=[DataRequired()])
+    # delivery service
+    equipment_pickup_at_location = BooleanField('Pickup at location')
+    equipment_delivery_option = BooleanField('Pickup at location')    
+    equipment_payment_btn = SubmitField('Add Equipment') -->
+  </div>
+</div>
+
+    <!-- <script src="{{ url_for('static', filename='js/equipment_category.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/location.js') }}"></script> -->
+    <script src="{{ url_for('static', filename='js/leaflet_map.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/order.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weather.js') }}"></script>
+
+    {% endblock %}

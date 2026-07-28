@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signup</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+  <style>
+    .invalid-tooltip {
+      font-size: 10px;
+      padding: 2px 5px;
+    }
+
+    label {
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <section>
+    <div class="container-fluid m-0">
+      <div class="row vh-100">
+        <div class="col-md-6 p-0 d-none d-md-block">
+          <img src="/static/agri_signup.jpg" class="w-100 h-100 object-fit-cover" alt="signup_image">
+        </div>
+        <div class="col-md-6">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} text-center" role="alert">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+          <div class="container-fluid mx-auto pt-2">
+            <form method="POST" action="{{ url_for('user.signup') }}" class="needs-validation mb-0" novalidate>
+              <h2 class="my-3 text-center"> Create a profile </h2>
+              <div class="mb-3 mx-5 position-relative">
+                <label for="firstname" class="pb-1">First Name</label>
+                <input type="text" class="form-control" name="firstname" aria-describedby="emailHelp"
+                  placeholder="Enter Your First Name" value="{{ user_input['first_name'] if user_input['first_name'] else '' }}" required>
+                <div class="invalid-tooltip">
+                  Please enter your first name
+                </div>
+              </div>
+              <div class="mb-3 mx-5 position-relative">
+                <label for="lastname" class="pb-1">Last Name</label>
+                <input type="text" class="form-control" name="lastname" aria-describedby="emailHelp"
+                  placeholder="Enter Your Last Name" required>
+                <div class="invalid-tooltip">Please enter your last name</div>
+              </div>
+              <div class="mb-3 mx-5 position-relative">
+                <label for="username" class="pb-1">Username</label>
+                <input type="text"
+                  class="form-control{% if username_error %} is-invalid {% else %} was-validated {% endif %}"
+                  id="username" name="username" data-error="usernameError" aria-describedby="emailHelp"
+                  value="{{ username }}" placeholder="Enter Your Username" required>
+                {% if username_error %}
+                <div id="usernameError" class="invalid-tooltip">{{ username_error }}</div>
+                {% else %}
+                <div id="usernameError" class="invalid-tooltip">Please enter a username</div>
+                {% endif %}
+              </div>
+              <!-- <div class="mb-4 mx-5 position-relative">
+              <input type="text" class="form-control" name="location" aria-describedby="emailHelp"
+                placeholder="Location" required>
+              <div class="invalid-tooltip">Please enter your Location</div>
+            </div> -->
+              <div class="mb-3 mx-5 position-relative">
+                <label for="email" class="pb-1">Email</label>
+                <input type="email"
+                  class="form-control{% if email_error %} is-invalid {% else %} was-validated {% endif %}" name="email"
+                  aria-describedby="emailHelp" placeholder="Enter Your Email" data-error="emailError"
+                  value="{{ email }}" required>
+                <!-- <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div> -->
+                {% if email_error %}
+                <div id="emailError" class="invalid-tooltip"> {{email_error}} </div>
+                {% else %}
+                <div id="emailError" class="invalid-tooltip"> Please enter a valid email </div>
+                {% endif %}
+              </div>
+              <div class="mb-1 mx-5 position-relative">
+                <label for="username" class="pb-1">Password</label>
+                <input type="password"
+                  class="form-control{% if password_error %} is-invalid {% else %} was-validated {% endif %}"
+                  name="password" aria-describedby="emailHelp" data-error="passwordError" value="{{ password }}"
+                  placeholder="Enter Your Password" required>
+                {% if errors and errors['password'] %}
+                  {{errors['password']}}
+                  <div class="invalid-feedback">{{errors['password']}}</div>
+                {% else %}
+                  <div class="invalid-feedback">Please enter a password</div>
+                {% endif %}
+              </div>
+              <div class="mb-4 mx-5">
+                <div id="emailHelp" class="form-text">Your password must be at least <span
+                    class="text-decoration-underline">8
+                    characters</span> long and contain a mix of <span class="text-decoration-underline">
+                    uppercase</span> and
+                  <span class="text-decoration-underline">lowercase</span> letters, <span
+                    class="text-decoration-underline">numbers</span> and <span class="text-decoration-underline">special
+                    characters</span>.
+                </div>
+              </div>
+              <div class="d-grid col-3 mx-auto pt-2">
+                <button type="submit" class="btn btn-outline-dark">Signup</button>
+              </div>
+            </form>
+          </div>
+          <div class="text-center mt-3">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <script>
+    // Bootstrap Form Validation
+    (() => {
+      'use strict';
+      const forms = document.querySelectorAll('.needs-validation');
+
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    })();
+
+    // Removes tooltip when user types anything in username field after validation
+    let inputElements = document.querySelectorAll("input"); // Select all input fields
+
+    inputElements.forEach(function (inputElement) {
+      inputElement.addEventListener("input", function () {
+        console.log("User typed something in an input field!");
+
+        let inputField = this;
+
+        // Find the related error tooltip using 'data-error' attribute
+        let errorTooltip = document.getElementById(inputField.dataset.error);
+        console.log(inputField.dataset.error)
+
+        // Remove 'is-invalid' class when user starts typing
+        if (inputField.value.trim() !== "") {
+          inputField.classList.remove("is-invalid");
+          errorTooltip.style.display = "none"; // Hide the tooltip
+        }
+      });
+    });
+  </script>
+  <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>

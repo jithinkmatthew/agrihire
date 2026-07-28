@@ -1,0 +1,77 @@
+{% extends "base.html" %} {% block title %}My Land Request{% endblock %} {%
+block content %}
+
+<style>
+
+  .fixed-image {
+    height: 170px;
+    object-fit: cover;
+  }
+
+  .mapview {
+    height: 300px;
+  }
+</style>
+
+<div class="container">
+  <h5 class="mb-4 text-primary fw-bold border-3 pb-2" style="letter-spacing: 1px; text-transform: uppercase;">
+    My Land Requests
+  </h5>
+
+  {% if active_request_as_tenant %}
+  <!-- <div class="row"> -->
+    {% for request in active_request_as_tenant %}
+    <div class="card m-4 border-0">
+      <div class="row g-0 rounded shadow">
+        <div class="col-md-4 d-flex align-items-center justify-content-center bg-light rounded fixed-image">
+          {% if image_file %}
+          <img class="card-img-top img-fluid rounded fixed-image"
+            src="{{ url_for('static', filename=request.file_path) }}" alt="Land Image" />
+          {% else %}
+          <i class="bi bi-image" style="font-size: 150px; color: #7e7e7eb3;"></i>
+          {% endif %}
+        </div>
+        <div class="col-md-8">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">{{ request.land_parcel_name }}</h5>
+            </div>
+            <div class="mt-1">
+              {% if request.application_status %}
+              Request Status : <span class="badge rounded-pill text-bg-dark"> {{ request.application_status |
+                format_status }}
+              </span>
+              {% endif %}
+            </div>
+            <div class="card-text">
+              <small class="text-muted">Requested on: {{ request.created_at }} </small>
+            </div>
+            <div class="mt-2">
+              <a class="btn btn-primary mx-2"
+                href="{{ url_for('land.view_land_request_as_tenant', parcel_req_id=request.application_id) }}">View</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- </div> -->
+    {% endfor %}
+  <!-- </div> -->
+  {%else%}
+  <div class="card shadow-sm text-center mx-auto bg-light border-0" style="max-width: 800px; padding: 40px;">
+    <div class="mb-3">
+      <i class="bi bi-geo-alt-off-fill" style="font-size: 3rem; color: #6c757d;"></i>
+    </div>
+    <h4 class="card-title mb-2">Nothing Here Yet</h4>
+    <p class="card-text text-muted mb-4">You haven't sent any land requests - start exploring available land opportunities</p>
+    <a href="{{ url_for('search.search_assets', new_search=1) }}" class="nav-link text-decoration-underline"><i class="bi bi-search me-2"></i>Search</a>
+  </div>
+  {% endif %}
+</div>
+
+<script src="{{ url_for('static', filename='js/leaflet_map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+<script src="{{ url_for('static', filename='js/order.js') }}"></script>
+<script src="{{ url_for('static', filename='js/weather.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Home - agriHire{% endblock %}
+
+{% block content %}
+
+<section class="hero-section">
+    <div class="container my-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="hero-title display-5">Farmers Connected...</h1>
+                <p class="hero-subtitle lead text-muted">
+                    Find what you need. Our platform connects you with the right machinery and land rentals, all in one place.
+                </p>
+                <div class="d-flex align-items-center justify-content-center gap-3">
+                    <h3 class="text-muted">Browse</h3>
+                    <a href="{{ url_for('search.search_assets', new_search=1) }}" class="btn btn-primary btn-lg">Land</a>
+                    <a href="{{ url_for('search.search_assets', new_search=1) }}" class="btn btn-primary btn-lg">Equipments</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<hr>
+
+<section class="main-section">
+    <div class="container">
+        <div class="row">
+            <div class="d-flex flex-wrap justify-content-center text-center gap-5">
+                <div class="p-2">
+                    <h1 class="display-4 fw-bold mb-0 lead text-muted">73+</h1>
+                    <hr class="w-25 mx-auto my-2">
+                    <p class="lead text-muted">Available Land Listings</p>
+                </div>
+
+                <div class="p-2">
+                    <h1 class="display-4 fw-bold mb-0 lead text-muted">1k+</h1>
+                    <hr class="w-25 mx-auto my-2">
+                    <p class="lead text-muted">Pieces of Equipment</p>
+                </div>
+
+                <div class="p-2">
+                    <h1 class="display-4 fw-bold mb-0 lead text-muted">2k+</h1>
+                    <hr class="w-25 mx-auto my-2">
+                    <p class="lead text-muted">Verified Farmers & Contractors</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<hr>
+
+<section>
+    <div class="container">
+        
+        <div class="row">
+            <div class="d-flex justify-content-center hero-title display-6">How it works </div>
+            <hr class="w-25 mx-auto my-3">
+            <div class="d-flex flex-wrap justify-content-center text-center">
+                <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill"
+                            data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home"
+                            aria-selected="true">For Owners</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill"
+                            data-bs-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile"
+                            aria-selected="false">For Hirer</button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-center text-center">
+                <div class="tab-content" id="pills-tabContent">
+                    <div class="tab-pane fade show active" id="pills-home" role="tabpanel"
+                        aria-labelledby="pills-home-tab">
+                        <div class="container">
+                            <!-- Hero Section -->
+                            <!-- <div class="hero-section text-center">
+                                <h2 class="display-5 text-success mb-3">Reach More Customers</h2>
+                                <p class="lead text-muted mb-4">
+                                    Join thousands of farmers
+                                </p>
+                                <button class="btn btn-success btn-custom btn-lg">
+                                    <i class="bi bi-rocket-takeoff me-2"></i>Start Selling Today
+                                </button>
+                            </div> -->
+
+                            <!-- Features Grid -->
+                            <div class="row g-4">
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card feature-card h-100 border-0">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-phone feature-icon"></i>
+                                            <h5 class="card-title">List Your Asset</h5>
+                                            <p class="card-text text-muted">
+                                                Create a detailed listing for your spare equipment or available land. 
+                                                Add photos, set your price, and define your rental terms. 
+                                                Our user-friendly dashboard makes it quick and easy.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card feature-card h-100 border-0">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-currency-dollar feature-icon"></i>
+                                            <h5 class="card-title">Accept Bookings</h5>
+                                            <p class="card-text text-muted">
+                                                Receive booking requests directly to your account. 
+                                                You can communicate with the renter, accept or decline the request, 
+                                                and manage your calendar, all from one place.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card feature-card h-100 border-0">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-graph-up feature-icon"></i>
+                                            <h5 class="card-title">Get Paid</h5>
+                                            <p class="card-text text-muted">
+                                                Once the rental period is complete, your payment is securely transferred to your bank account. 
+                                                Our platform handles all the financial logistics, giving you peace of mind.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+                        <div class="container">
+
+                            <!-- Features Grid -->
+                            <div class="row g-4">
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card feature-card h-100 border-0">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-phone feature-icon"></i>
+                                            <h5 class="card-title">Find your asset</h5>
+                                            <p class="card-text text-muted">
+                                                Browse thousands of listings. Use smart search to find farm equipment or land. 
+                                                Filter by location, asset type, and dates.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card feature-card h-100 border-0">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-currency-dollar feature-icon"></i>
+                                            <h5 class="card-title">Make a booking</h5>
+                                            <p class="card-text text-muted">
+                                                Select your dates. Send a booking request. The owner will confirm the rental. 
+                                                For eligible listings, you can book instantly.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card feature-card h-100 border-0">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-graph-up feature-icon"></i>
+                                            <h5 class="card-title">Start your rental</h5>
+                                            <p class="card-text text-muted">
+                                                Meet the owner to get the equipment or access the land. 
+                                                After your rental, simply return the asset. Payment is securely released to the owner.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+{% endblock %}

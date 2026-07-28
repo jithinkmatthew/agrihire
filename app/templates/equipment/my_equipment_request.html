@@ -1,0 +1,166 @@
+{% extends "base.html" %} {% block title %}My Equipment Request{% endblock %} {%
+block content %}
+
+<style>
+  .fixed-height-image {
+    height: 300px;
+    /* Adjust to your desired height */
+    overflow: hidden;
+  }
+
+  .fixed-height-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Ensures the image covers the container without distortion */
+  }
+
+  .fixed-image {
+    height: 255px;
+    object-fit: cover;
+  }
+
+
+  .dollar {
+    font-size: 25px;
+  }
+
+  .mapview {
+    height: 300px;
+    /* Or any other height you want */
+  }
+</style>
+
+<div class="container">
+    <h5 class="mb-4 text-primary fw-bold border-3 pb-2" style="letter-spacing: 1px; text-transform: uppercase;">
+      My Equipment Requests
+  </h5>
+  <h4 class="fw-bold text-secondary"></h4>
+  <ul class="nav nav-pills mb-3 shadow-sm" id="equip_tab" role="tablist">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link active" id="pills-active-order-tab" data-bs-toggle="pill" href="#pills-active-order" role="tab"
+        aria-controls="pills-active-order" aria-selected="true">Active Orders</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="pills-past-order-tab" data-bs-toggle="pill" href="#pills-past-order" role="tab"
+        aria-controls="pills-past-order" aria-selected="false">Past Order</a>
+    </li>
+  </ul>
+  <div class="tab-content p-3" id="pills-tabContent">
+    <!-- 1st Tab-->
+    <div class="tab-pane fade show active" id="pills-active-order" role="tabpanel"
+      aria-labelledby="pills-active-order-tab">
+      {% if active_rentals_as_renter %}
+      <div class="row">
+        {% for equipment in active_rentals_as_renter %}
+        {% set image_file = active_equipment_files | selectattr('equipment_id', '==', equipment.equipment_id) |
+        selectattr('file_type', '==', 'image') | first %}
+        <div class="col-md">
+          <div class="card m-4">
+            <div class="row g-0 rounded shadow">
+              <div class="col-md-4">
+                {% if image_file %}
+                <img class="card-img-top img-fluid rounded fixed-image"
+                  src="{{ url_for('static', filename=image_file.file_path) }}" alt="Equipment Image" />
+                {% else %}
+                <img class="card-img-top img-fluid rounded fixed-image"
+                  src="{{ url_for('static', filename='defaultimage.jpg') }}" alt="Equipment Image" />
+                {% endif %}
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ equipment.equipment_name }}</h5>
+                  </div>
+                  <div class="card-text">
+                    <i class="bi bi-collection"></i> {{equipment.make}} {{equipment.model}} ({{equipment.year}})
+                  </div>
+                  <div class="mt-1">
+                    {% if equipment.equipment_status %}
+                    <span class="badge rounded-pill text-bg-dark"> {{ equipment.equipment_status | format_status }}
+                    </span>
+                    {% endif %}
+                  </div>
+                  {% if equipment.price_modal == 'per_day' %}
+                  <div class="mt-1">{{equipment.rental_duration}} Days</div>
+                  <div>Rental Period : {{equipment.rental_start_date | dateformat}} to {{equipment.rental_end_date |
+                    dateformat}}</div>
+                  {% endif %}
+                  {% if equipment.price_modal == 'per_hour' %}
+                  <div class="mt-1">{{equipment.rental_duration}} Hours</div>
+                  <div>Rental Period : {{equipment.rental_start_time | timeformat}} to {{equipment.rental_end_time |
+                    timeformat}}</div>
+                  {% endif %}
+                  <div class="mt-2">
+                    <small class="text-muted">Total Amount</small>
+                    <div class="card-text fs-4"> {{ equipment.transaction_amount }} </div>
+                  </div>
+                  <div class="card-text">
+                    <small class="text-muted">Requested on: {{ equipment.transaction_date }} </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="text-center mt-3">
+            <p class="text-muted">It looks like you haven't placed any **equipment rental orders** yet, or all your past
+              rentals have been successfully completed.</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <!-- 2nd Tab -->
+    <div class="tab-pane fade" id="pills-past-order" role="tabpanel" aria-labelledby="pills-past-order-tab">
+      {% if past_rentals_as_renter %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Item</th>
+            <th scope="col">Start Date</th>
+            <th scope="col">Transaction Date</th>
+            <th scope="col">Transaction Mode</th>
+            <th scope="col">Transaction Amount</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for equipment in past_rentals_as_renter %}
+          {% set image_file = past_equipment_files | selectattr('equipment_id', '==', equipment.equipment_id) |
+          selectattr('file_type', '==', 'image') | first %}
+          <tr>
+            <td>{{equipment.equipment_name}}</td>
+            <td>{{equipment.rental_start_date}}</td>
+            <td>{{equipment.transaction_date}}</td>
+            <td>{{equipment.payment_mode}}</td>
+            <td>{{equipment.transaction_amount}}</td>
+            <td>{{equipment.request_status}}</td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+      {% else %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="text-center mt-3">
+            <p class="text-muted">No orders Yet</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/leaflet_map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+<script src="{{ url_for('static', filename='js/order.js') }}"></script>
+<script src="{{ url_for('static', filename='js/weather.js') }}"></script>
+
+{% endblock %}

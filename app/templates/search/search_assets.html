@@ -1,0 +1,465 @@
+{% extends "base.html" %}
+
+{% block title %}Search{% endblock %}
+
+{% block content %}
+
+<style>
+  .card-img-fixed-height {
+    height: 200px;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .card-img-fixed-height img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* nav */
+  .card {
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+  }
+
+  a.active {
+    border-bottom: 4px solid #0d6efd;
+  }
+
+  .nav-pills .nav-link.active {
+    color: black;
+    background-color: white;
+    border-radius: 10px 10px 0 0;
+    font-weight: 600;
+  }
+
+  .tab-content {
+    padding-bottom: 10px;
+  }
+
+  .form-control {
+    background-color: rgb(241, 243, 247);
+    border: none;
+  }
+
+  /* 3nd card */
+
+  .form-control:focus {
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset, 0px 0px 7px rgba(0, 0, 0, 0.2);
+  }
+
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: "";
+  }
+
+  /* 1st card */
+  .search {
+    padding: 0 1rem 0 1rem;
+  }
+
+  .ccontent li .wrapp {
+    padding: 0.3rem 1rem 0.001rem 1rem;
+  }
+
+  .ccontent li .wrapp div {
+    font-weight: 600;
+  }
+
+  .ccontent li .wrapp p {
+    font-weight: 360;
+  }
+
+  .ccontent li:hover {
+    background-color: rgb(117, 93, 255);
+    color: white;
+  }
+
+  /* 2nd card */
+  .addinfo {
+    padding: 0 1rem;
+  }
+
+  .fixed-image {
+    height: 150px;
+    object-fit: cover;
+  }
+
+  .preview-image {
+    width: 100%;
+    height: 350px;
+    object-fit: cover;
+  }
+
+  #map {
+    height: 300px;
+    width: 100%;
+  }
+
+  .mapview {
+    height: 200px;
+  }
+
+</style>
+
+<h4 class="fw-bold text-secondary">Search</h4>
+<div class="container">
+  <div class="card">
+    <div class="card-body p-0">
+      <ul class="nav nav-pills row" id="search_tab" role="tablist">
+        <div class="col-md-6">
+          <li class="nav-item">
+            <a class="nav-link active rounded" id="pills-equip-tab" data-bs-toggle="pill" href="#pills-equip" role="tab"
+              aria-controls="pills-equip" aria-selected="true">Equipments</a>
+          </li>
+        </div>
+        <div class="col-md-6">
+          <li class="nav-item">
+            <a class="nav-link rounded" id="pills-land-tab" data-bs-toggle="pill" href="#pills-land" role="tab"
+              aria-controls="pills-land" aria-selected="false">Land</a>
+          </li>
+        </div>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="tab-content" id="pills-tabContent">
+
+        <!-- First Tab -->
+        <div class="tab-pane fade show active" id="pills-equip" role="tabpanel" aria-labelledby="pills-equip-tab">
+          <div class="card shadow d-flex justify-content-center mt-4">
+            <form method="POST" class="equip_search_form" action="{{ url_for('search.search_assets') }}"
+              enctype="multipart/form-data">
+              {{ equipment_form.hidden_tag() }}
+              <div class="card bg-light">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="mb-3 col-md-2">
+                      {{ equipment_form.equipment_category.label(class="form-label fw-light") }}
+                      {{ equipment_form.equipment_category(class="form-control", id="search_category") }}
+                    </div>
+                    <div class="mb-3 col-md-2">
+                      {{ equipment_form.equipment_region.label(class="form-label fw-light") }}
+                      {{ equipment_form.equipment_region(class="form-control", id="equip_search_region") }}
+                    </div>
+                    <div class="mb-3 col-md-2">
+                      {{ equipment_form.equipment_district.label(class="form-label fw-light") }}
+                      {{ equipment_form.equipment_district(class="form-control", id="equip_search_district") }}
+                    </div>
+                    <div class="mb-3 col-md-2">
+                      {{ equipment_form.equipment_suburb.label(class="form-label fw-light") }}
+                      {{ equipment_form.equipment_suburb(class="form-control", id="equip_search_suburb") }}
+                    </div>
+                    <div class="mt-3 col-md-4 d-flex justify-content-start align-items-start align-items-center">
+                      {{ equipment_form.equipment_search_btn(class="btn btn-primary", value="View Listing") }}
+                    </div>
+                  </div>
+                  <div class="modal fade" id="equipCompareModal" tabindex="-1" aria-labelledby="compareModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Compare Equipments</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="compareModalBody">
+                          <div class="row">
+                            <table class="table table-bordered">
+                              <tbody id="equipCompareContent">
+                                <!-- Data will append here by using javascript -->
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </form>
+          </div>
+          {% if equipment_searched %}
+          <div>
+            {% if equipment_results %}
+            <div class="card my-4">
+              <div class="row">
+                <div class="col-md-6 d-flex justify-content-start align-items-end"> Found {{ equipment_results|length }}
+                  results </div>
+                <div class="col-md-6 d-flex justify-content-end align-items-center">
+                  <input type="button" id="equipCompareBtn" class="btn btn-primary mx-1" disabled
+                    data-bs-target="#equipCompareModal" value="Compare">
+                  <i class="bi bi-trash3" id="equipClearCompareBtn" style="font-size: 32px;"></i>
+                </div>
+              </div>
+            </div>
+            {% for equipment in equipment_results %}
+            <div class="card my-4">
+              <div class="row g-0 rounded shadow">
+                <div class="row">
+                  <div class="col-md-12">
+                    {% if equipment.image_file %}
+                    <img class="card-img-top rounded fixed-image" src="{{ url_for('static', filename=equipment.image_file) }}" alt="Equipment Image">
+                    {% else %}
+                    <img class="card-img-top img-fluid rounded fixed-image" src="{{ url_for('static', filename='defaultimage.jpg') }}" alt="Equipment Image">
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ equipment.name }}</h5>
+                        <span class="badge rounded-pill bg-success"><i class="bi bi-globe-americas"></i>
+                          Available</span>
+                      </div>
+                      <p class="card-text"><i class="bi bi-collection"></i> {{equipment.category_name}}</p>
+                      <div class="d-flex align-items-center mb-2">
+                        <div class="card-text"><i class="bi bi-shield-check"></i> {{equipment.make}}</div>
+                        <div class="card-text mx-2"><i class="bi bi-bookmark"></i> {{equipment.model}}</div>
+                      </div>
+                      <p class="card-text">{{equipment.description}}</p>
+                      <div class="row">
+                        <div class="col-md-6">
+                          <div class="card-text"><small class="text-muted">Last updated:
+                              {{equipment.updated_date.strftime("%d-%m-%Y %I:%M %p") }}</small></div>
+                        </div>
+                        <div class="col-md-6 d-flex justify-content-end align-items-center">
+                          <input type="checkbox" class="btn-check equip-compare-checkbox" id="btn-check-outlined_{{ equipment.equipment_id }}" data-equipment-id="{{ equipment.equipment_id }}" autocomplete="off">
+                          <label class="btn btn-outline-primary" for="btn-check-outlined_{{ equipment.equipment_id }}" ><i class="bi bi-intersect" title="Add to Compare"></i> Add to Compare </label>
+                          <a class="btn btn-primary mx-2" href="{{ url_for('equipment.view_equipment', equip_id=equipment.equipment_id) }}">View</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor%}
+            {% else %}
+            <div class="card p-4 m-4 text-center shadow-sm">
+              <p class="mb-0 fw-bold">No equipment found.</p>
+              <small class="text-muted">Please try a different search or adjust your filters.</small>
+            </div>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="mt-3">
+            <div class="card bg-light">
+              <div class="card-body">
+                <div class="card p-4 m-4 text-center shadow-sm">
+                  <p class="mb-0 fw-bold">Welcome!</p>
+                  <small class="text-muted">Use the search options above to find equipment for hire.</small>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="card p-4 m-4 text-center shadow-sm">
+                      <div class="row">
+                        <p class="card-text fw-light">
+                          <i class="bi bi-box-seam"></i> Everything you need, just a search away.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card p-4 m-4 text-center shadow-sm">
+                      <div class="row">
+                        <p class="card-text fw-light">
+                          <i class="bi bi-box-seam"></i> Find your perfect match - explore available options!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Second Tab -->
+        <div class="tab-pane fade" id="pills-land" role="tabpanel" aria-labelledby="pills-land-tab">
+          <div class="card shadow d-flex justify-content-center mt-4">
+            <form method="POST" class="land_search_form" action="{{ url_for('search.search_assets') }}"
+              enctype="multipart/form-data">
+              {{ land_form.hidden_tag() }}
+              <div class="card bg-light">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="mb-3 col-md-2">
+                      {{ land_form.land_category.label(class="form-label fw-light") }}
+                      {{ land_form.land_category(class="form-control", id="search_category") }}
+                    </div>
+                    <div class="mb-3 col-md-2">
+                      {{ land_form.land_region.label(class="form-label fw-light") }}
+                      {{ land_form.land_region(class="form-control", id="land_search_region") }}
+                    </div>
+                    <div class="mb-3 col-md-2">
+                      {{ land_form.land_district.label(class="form-label fw-light") }}
+                      {{ land_form.land_district(class="form-control", id="land_search_district") }}
+                    </div>
+                    <div class="mb-3 col-md-2">
+                      {{ land_form.land_suburb.label(class="form-label fw-light") }}
+                      {{ land_form.land_suburb(class="form-control", id="land_search_suburb") }}
+                    </div>
+                    <div class="mt-3 col-md-4 d-flex justify-content-start align-items-start align-items-center">
+                      {{ land_form.land_search_btn(class="btn btn-primary", value="View Listing") }}
+                    </div>
+                  </div>
+
+                  <div class="modal fade" id="landCompareModal" tabindex="-1" aria-labelledby="compareModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Compare Land Parcel</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="compareModalBody">
+                          <div class="row">
+                            <table class="table table-bordered">
+                              <tbody id="landCompareContent">
+                                <!-- Data will append here by using javascript -->
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {% if land_searched %}
+          <div>
+            {% if land_results %}
+            <div class="card my-4">
+              <div class="row">
+                <div class="col-md-6 d-flex justify-content-start align-items-end"> Found {{ land_results|length }} results </div>
+                <div class="col-md-6 d-flex justify-content-end align-items-center">
+                  <input type="button" id="landCompareBtn" class="btn btn-primary mx-1" disabled
+                    data-bs-target="#landCompareModal" value="Compare">
+                  <i class="bi bi-trash3" id="landClearCompareBtn" style="font-size: 32px;"></i>
+                </div>
+              </div>
+            </div>
+            {% for land in land_results %}
+            <div class="card my-4">
+              <div class="row g-0 rounded shadow">
+                <div class="row">
+                  <div class="col-md-12">
+                    {% if land.file_path %}
+                    <img class="card-img-top rounded fixed-image" src="{{ url_for('static', filename=land.file_path) }}" alt="Equipment Image">
+                    {% else %}
+                    <img class="card-img-top img-fluid rounded fixed-image" src="{{ url_for('static', filename='defaultimage.jpg') }}" alt="Equipment Image">
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ land.name }}</h5>
+                        <span class="badge rounded-pill bg-success"><i class="bi bi-globe-americas"></i> Available</span>
+                      </div>
+                      <p class="card-text"><i class="bi bi-collection"></i> {{land.category_name}}</p>
+                      <p class="card-text">{{land.description}}</p>
+                      <div class="row">
+                        <div class="col-md-6">
+                          <div class="card-text"><small class="text-muted">Last updated: {{land.updated_date.strftime("%d-%m-%Y %I:%M %p") }}</small></div>
+                        </div>
+                        <div class="col-md-6 d-flex justify-content-end align-items-center">
+                          <input type="checkbox" class="btn-check land-compare-checkbox" id="land_compare_{{ land.land_parcel_id }}" data-equipment-id="{{ land.land_parcel_id }}" autocomplete="on">
+                          <label class="btn btn-outline-primary" for="land_compare_{{ land.land_parcel_id }}"><i class="bi bi-intersect"></i> Add to Compare </label>
+                          <a class="btn btn-primary mx-2" href="{{ url_for('land.view_land_parcel', parcel_id=land.land_parcel_id) }}">View</a>                        
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor%}
+            {% else %}
+            <div class="card p-4 m-4 text-center shadow-sm">
+              <p class="mb-0 fw-bold">No Land Parcel found.</p>
+              <small class="text-muted">Please try a different search or adjust your filters.</small>
+            </div>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="mt-3">
+            <div class="card bg-light">
+              <div class="card-body">
+                <div class="card p-4 m-4 text-center shadow-sm">
+                  <p class="mb-0 fw-bold">Welcome!</p>
+                  <small class="text-muted">Use the search options above to find land for lease.</small>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="card p-4 m-4 text-center shadow-sm">
+                      <div class="row">
+                        <p class="card-text fw-light">
+                          <i class="bi bi-box-seam"></i> Everything you need, just a search away.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card p-4 m-4 text-center shadow-sm">
+                      <div class="row">
+                        <p class="card-text fw-light">
+                          <i class="bi bi-box-seam"></i> Find your perfect match - explore available options!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Restore active tab from localStorage
+    const activeTabId = localStorage.getItem('activeSearchTab');
+    if (activeTabId) {
+      const triggerEl = document.querySelector(`#search_tab a[href="${activeTabId}"]`);
+      if (triggerEl) {
+        const tab = new bootstrap.Tab(triggerEl);
+        tab.show();
+      }
+    }
+
+    // Save active tab to localStorage when switched
+    const tabLinks = document.querySelectorAll('#search_tab a[data-bs-toggle="pill"]');
+    tabLinks.forEach(tabLink => {
+      tabLink.addEventListener('shown.bs.tab', function (event) {
+        localStorage.setItem('activeSearchTab', event.target.getAttribute('href'));
+      });
+    });
+  });
+</script>
+
+
+<script src="{{ url_for('static', filename='js/asset_compare.js') }}"></script>
+<script src="{{ url_for('static', filename='js/location.js') }}"></script>
+<script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+
+{% endblock %}

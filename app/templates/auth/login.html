@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+  <style>
+    .invalid-tooltip {
+      font-size: 10px;
+      padding: 2px 5px;
+    }
+
+    label {
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <section>
+    <div class="container-fluid m-0">
+      <div class="row vh-100">
+        <div class="col-md-6">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} text-center" role="alert">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="container-fluid mx-auto pt-2">
+          <form method="POST" action="{{ url_for('auth.login') }}" class="needs-validation mb-0" novalidate>
+            <h2 class="my-3 text-center">Welcome back...</h2>
+            <div class="mb-4 mx-5 position-relative">
+              <label for="username" class="pb-1">Username</label>
+              <input type="text"
+                class="form-control{% if username_error %} is-invalid {% else %} was-validated {% endif %}"
+                id="username" name="username" data-error="usernameError" aria-describedby="emailHelp"
+                value="{{ username }}" placeholder="Enter Your Username" required>
+              {% if username_error %}
+              <div id="usernameError" class="invalid-tooltip">{{ username_error }}</div>
+              {% else %}
+              <div id="usernameError" class="invalid-tooltip">Please enter a username</div>
+              {% endif %}
+            </div>
+            <div class="mb-3 mx-5 position-relative">
+              <label for="password" class="pb-1">Password</label>
+              <input type="password"
+                class="form-control{% if password_error %} is-invalid {% else %} was-validated {% endif %}"
+                name="password" aria-describedby="emailHelp" data-error="passwordError" value="{{ password }}"
+                placeholder="Enter Your Password" required>
+              {% if password_error %}
+              <div id="passwordError" class="invalid-tooltip"> {{password_error}} </div>
+              {% else %}
+              <div id="passwordError" class="invalid-tooltip"> Please enter a password</div>
+              {% endif %}
+            </div>
+            <div class="d-grid col-3 mx-auto pt-2">
+              <button type="submit" class="btn btn-outline-dark">Log In</button>
+            </div>
+          </form>
+        </div>
+        <div class="text-center mt-3">Don't have an account yet? &nbsp; <a href="{{ url_for('user.signup') }}"> Sign up</a></div>
+        </div>
+        <div class="col-md-6 p-0 d-none d-md-block">
+          <img src="/static/login.jpg" class="w-100 h-100 object-fit-cover" alt="login">
+        </div>
+      </div>
+    </div>
+  </section>
+  <script>
+      // Bootstrap Form Validation
+      (() => {
+        'use strict';
+        const forms = document.querySelectorAll('.needs-validation');
+
+        Array.from(forms).forEach(form => {
+          form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+          }, false);
+        });
+      })();
+    </script>
+  <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>

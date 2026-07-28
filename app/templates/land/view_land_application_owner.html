@@ -1,0 +1,477 @@
+{% extends "base.html" %}
+
+{% block title %}Add Equipment{% endblock %}
+
+{% block content %}
+
+<style>
+    .fixed-height-image {
+        height: 300px;
+        overflow: hidden;
+    }
+
+    .fixed-height-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    #map_view {
+        height: 300px;
+        width: 100%;
+    }
+</style>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-7">
+            <!-- Step 1 -->
+            <div class="step1">
+                {% set stage1 = parcel_req_stages | selectattr('stage_number', '==', 1) | list %}
+                <div class="accordion" id="applicationStage">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                <div class="row">
+                                    <div>
+                                        State 1 : Application Submitted
+                                        {% if stage1[0].stage_status == 'pending' %}
+                                        <span class="badge text-bg-dark">Pending Review</span>
+                                        {% elif stage1[0].stage_status == 'approved' %}
+                                        <span class="badge text-bg-dark">Approved</span>
+                                        {% elif stage1[0].stage_status == 'rejected' %}
+                                        <span class="badge text-bg-danger">Declined</span>
+                                        {% endif %}
+                                    </div>
+                                    <div><small class="text-muted">Tenant has submitted application for review</small>
+                                    </div>
+                                    <small class="text-muted">Application Submitted On : {{
+                                        active_request_owner[0].created_at }}</small>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapseOne"
+                            class="accordion-collapse collapse {% if stage1[0].stage_status == 'pending' %}show{% endif %}"
+                            aria-labelledby="headingOne" data-bs-parent="#applicationStage">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md">
+                                        <small class="text-muted">Intended Use</small>
+                                        <div>{{ active_request_owner[0].farming_type_name | default('-', true) }}</div>
+                                    </div>
+                                    <div class="col-md">
+                                        <small class="text-muted">Desired Lease Duration</small>
+                                        <div>{{ active_request_owner[0].duration_years | default('-', true) }}</div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="mt-2">
+                                        <small class="text-muted">Farming Experience</small>
+                                        <div>{{ active_request_owner[0].experience | default('-', true) }}</div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">Additional Information</small>
+                                        <div>{{ active_request_owner[0].additional_notes | default('-', true) }}</div>
+                                    </div>
+                                </div>
+
+                                {% if parcel_req_stages[0].stage_status == 'pending' %}
+                                <div class="row mt-3">
+                                    <div class="col-md-6 d-flex">
+                                        <form method="POST"
+                                            action="{{ url_for('land.approve_application_stage_as_owner', parcel_req_id=active_request_owner[0].application_id) }}">
+                                            {{ application_stage_form.hidden_tag() }}
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-check-lg"></i> Approve & Continue
+                                            </button>
+                                        </form>
+                                        <form class="px-1" method="POST"
+                                            action="{{ url_for('land.decline_application_stage_as_owner', parcel_req_id=active_request_owner[0].application_id) }}">
+                                            {{ application_stage_form.hidden_tag() }}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-x-lg"></i> Decline
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                {% elif parcel_req_stages[0].stage_status == 'rejected' %}
+
+                                <div class="card p-3 bg-light mt-3"> 
+                                    <div> <i class="bi bi-slash-circle"></i> Application Declined</div>
+                                </div>
+                                {% else %}
+                                <div class="card p-3 mt-3 bg-light">
+                                    <div><i class="bi bi-info-circle-fill"></i> Next Step: Schedule a site visit with
+                                        the tenant.</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step2 mt-4">
+                {% set stage2 = parcel_req_stages | selectattr('stage_number', '==', 2) | list %}
+                {% set status2 = (stage2[0].stage_status if stage2 and stage2[0] else 'locked') %}
+                <div class="accordion" id="applicationStage2">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo" {% if status2=='locked' %}disabled{% endif %}>
+                                <div class="row">
+                                    <div>State 2 : Site Inspection
+                                        {% if status2 == 'pending' %}
+                                        <span class="badge text-bg-dark">Pending Review</span>
+                                        {% elif status2 == 'approved' %}
+                                        <span class="badge text-bg-dark">Approved</span>
+                                        {% elif status2 == 'rejected' %}
+                                        <span class="badge text-bg-danger">Declined</span>
+                                        {% else %}
+                                        <span class="badge text-bg-danger">Locked</span>
+                                        {% endif %}
+                                    </div>
+                                    <div><small class="text-muted">Choose available date and it will be notified to the
+                                            tenant</small></div>
+                                    <!-- <small class="text-muted">Application Submitted On : {{ active_request_owner[0].created_at }}</small> -->
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapseTwo"
+                            class="accordion-collapse collapse {% if stage1[0].stage_status == 'approved' %}show{% endif %}"
+                            aria-labelledby="headingTwo" data-bs-parent="#applicationStage2">
+                            <div class="accordion-body">
+                                {% if site_inspection_data[0] and site_inspection_data[0].scheduled_date %}
+                                <div class="card">
+                                    <div class="row p-4">
+                                        <small class="text-muted">Inspection Date and Time</small>
+                                        <div>{{site_inspection_data[0].scheduled_date | dateformat}}</div>
+                                        <small>{{site_inspection_data[0].scheduled_start_time}} -
+                                            {{site_inspection_data[0].scheduled_end_time}}</small>
+                                    </div>
+                                </div>
+                                <div class="card mt-2">
+                                    {% if site_inspection_data[0].inspector_notes is none %}
+                                    <form method="POST" action="{{ url_for('land.approve_or_decline_inspection_stage_as_owner', parcel_req_id=active_request_owner[0].application_id) }}">
+                                        {{ inspection_confirm_form.hidden_tag() }}
+                                        <div class="row p-4">
+                                            <small class="text-muted">Inspection Note</small>
+                                            <div>{{inspection_confirm_form.land_inspection_note(class="form-control")}}
+                                            </div>
+                                        </div>
+                                        <div class="row p-4 my-2">
+                                            <div class="my-2">{{inspection_confirm_form.land_inspection_approval_btn(class="btn btn-sm btn-primary")}}</div>
+                                            <div>{{inspection_confirm_form.land_inspection_decline_btn(class="btn btn-sm btn-danger")}}</div>
+                                            
+                                            <!-- <button type="submit" class="btn btn-sm btn-danger mt-3">
+                                                <i class="bi bi-x-lg"></i> Decline
+                                            </button> -->
+                                        </div>
+                                    </form>
+                                    {% endif %}
+                                    
+                                    {% if status2=='approved'%}
+                                    <div class="row p-4">
+                                        <small class="text-muted">Inspection Note</small>
+                                        <div>{{site_inspection_data[0].inspector_notes}}</div>
+                                    </div>
+                                    <div class="card p-3 mt-3 border-0 bg-light">
+                                        <div><i class="bi bi-info-circle-fill"></i> Next Step: Begin document
+                                            verification to continue the process.</div>
+                                    </div>
+                                    {% elif status2 == 'pending'%}
+                                    <div class="card p-3 bg-light border-0">Record the site visit update here. Proceed to the next step only if both parties have confirmed their interest.</div>
+                                    {% else %}
+                                    <div class="row p-4">
+                                        <small class="text-muted">Inspection Note</small>
+                                        <div>{{site_inspection_data[0].inspector_notes}}</div>
+                                    </div>
+                                    <div class="card p-3 border-0 bg-light">
+                                        <div><i class="bi bi-slash-circle"></i> Application Declined</div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <form method="POST"
+                                    action="{{ url_for('land.sent_site_inspection_invite_as_owner', parcel_req_id=active_request_owner[0].application_id) }}">
+                                    {{ inspection_stage_form.hidden_tag() }}
+                                    <div class="sent-invitation">
+                                        <div class="row">
+                                            <div class="col-md">
+                                                <small class="text-muted">Inspection Date</small>
+                                                <div>
+                                                    {{inspection_stage_form.land_inspection_date(class="form-control")}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md">
+                                                <small class="text-muted">Start Time</small>
+                                                {{inspection_stage_form.land_inspection_start_time(class="form-control")}}
+                                            </div>
+                                            <div class="col-md">
+                                                <small class="text-muted">End Time</small>
+                                                {{inspection_stage_form.land_inspection_end_time(class="form-control")}}
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md">
+                                                {{inspection_stage_form.land_inspection_sent_invitation_btn(class="btn btn-primary")}}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step3 mt-4">
+                {% set stage3 = parcel_req_stages | selectattr('stage_number', '==', 3) | list %}
+                {% set status3 = (stage3[0].stage_status if stage3 and stage3[0] else 'locked') %}
+                <div class="accordion" id="applicationStage3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree" {% if status3=='locked' %}disabled{% endif %}>
+                                <div class="row">
+                                    <div>State 3 : Document Verification
+                                        {% if status3 == 'pending' %}
+                                        <span class="badge text-bg-dark">Pending Review</span>
+                                        {% elif status3 == 'approved' %}
+                                        <span class="badge text-bg-dark">Approved</span>
+                                        {% elif status3 == 'rejected' %}
+                                        <span class="badge text-bg-danger">Declined</span>
+                                        {% else %}
+                                        <span class="badge text-bg-danger">Locked</span>
+                                        {% endif %}
+                                    </div>
+                                    <div><small class="text-muted">Collect relavant documents from tenants</small></div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse {% if status3 == 'approved' %}show{% endif %}"
+                            aria-labelledby="headingThree" data-bs-parent="#applicationStage3">
+                            <div class="accordion-body">
+                                {% if verification_docs %}
+                                <div class="card p-3">Documents uploaded by tenants</div>
+                                <div class="card mt-3">
+                                    {% for doc in verification_docs %}
+                                    <div class="rounded shadow-sm mt-3">
+                                        <div class="card-body bg-light my-2">
+                                            {{ doc.document_type | format_status }} :
+                                            <a href="{{ url_for('static', filename=doc.file_path) }}" download>Download File</a>
+                                            {% if doc.verified_by %}
+                                            <i class="bi bi-check-circle-fill" style="color:green"></i>
+                                            {% else %}
+                                            <i class="bi bi-exclamation-lg" style="color:rgb(215, 0, 0)"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% if not all_verified %}
+                                <div class="row mt-3">
+                                    <div class="col-md-6 d-flex">
+                                        <form method="POST"
+                                            action="{{ url_for('land.approve_document_verification_stage_as_owner', parcel_req_id=active_request_owner[0].application_id) }}">
+                                            {{ doc_verification_form.hidden_tag() }}
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-check-lg"></i> Approve & Continue
+                                            </button>
+                                        </form>
+                                        <form class="px-1" method="POST" action="#">
+                                            {{ application_stage_form.hidden_tag() }}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-x-lg"></i> Decline
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="card p-3 mt-3">
+                                    <div><i class="bi bi-info-circle-fill"></i> Next Stage : Agreement Signing</div>
+                                </div>
+                                {%endif%}
+                                {% else %}
+                                <div class="card p-3">Wait until tenants upload documents</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage 4 -->
+            <div class="step4 my-4">
+                {% set stage4 = parcel_req_stages | selectattr('stage_number', '==', 4) | list %}
+                {% set status4 = (stage4[0].stage_status if stage4 and stage4[0] else 'locked') %}
+                <div class="accordion" id="applicationStage4">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFour">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour" {% if status4=='locked' %}disabled{% endif %}>
+                                <div class="row">
+                                    <div>State 4 : Agreement Signing
+                                        {% if status4 == 'pending' %}
+                                        <span class="badge text-bg-dark">Pending Review</span>
+                                        {% elif status4 == 'approved' %}
+                                        <span class="badge text-bg-dark">Approved</span>
+                                        {% elif status4 == 'rejected' %}
+                                        <span class="badge text-bg-danger">Declined</span>
+                                        {% else %}
+                                        <span class="badge text-bg-danger">Locked</span>
+                                        {% endif %}
+                                    </div>
+                                    <div><small class="text-muted">Collect relavant documents from tenants</small></div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapseFour" class="accordion-collapse collapse {% if status4 == 'approved' %}show{% endif %}" 
+                            aria-labelledby="headingFour" data-bs-parent="#applicationStage4">
+                            <div class="accordion-body">
+                                {% if proposal_data and proposal_data|length > 0 %}
+                                <div>
+                                    {% for proposal in proposal_data %}
+                                    <div class="row">
+                                        <div class="col-md">
+                                            <div class="card p-3">
+                                                <div>Duration : {{ proposal.lease_from | date_between(proposal.lease_to)}}</div>
+                                                <div class="d-flex">
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted">Lease From</small>
+                                                        <div class="text-muted">{{proposal.lease_from | dateformat}}</div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted">Lease To</small>
+                                                        <div class="text-muted">{{proposal.lease_to | dateformat}}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <small class="text-muted">Lease Amount</small>
+                                            <div>{{proposal.rent}}</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted">Leasing Modal</small>
+                                            <div>{{proposal.pricing_modal}}</div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <small class="text-muted">Security Deposit</small>
+                                            <div>{{proposal.security_deposit}}</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted">Intended Use</small>
+                                            <div>{{proposal.intended_use}}</div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md">
+                                            <small class="text-muted">Notes</small>
+                                            <div>{{proposal.notes}}</div>
+                                        </div>
+                                    </div>
+                                    <div class="card mt-3">
+                                        <div class="card-body bg-light">Proposed Document : <a href="{{ url_for('static', filename=proposal.proposed_agreement_doc) }}" download>Download File</a> </div>
+                                    </div>
+                                    {% if proposal.signed_agreement_doc %}
+                                    <div class="card p-3 mt-3">
+                                        <div>The tenant has submitted the signed agreement. Please review the document </div>
+                                        <div class="card-body bg-light"> Signed Document : <a href="{{ url_for('static', filename=proposal.signed_agreement_doc) }}" download>Download File</a></div>
+                                    </div>
+                                    {% endif %}
+                                    {% if active_request_owner[0].is_leased == 0 %}
+                                    <div class="card my-3 border-0">
+                                        <div class="row d-flex justify-content-end">
+                                            <form method="POST" action="{{ url_for('land.start_land_lease_as_owner', parcel_req_id=active_request_owner[0].application_id) }}">
+                                                {{ final_approval_form.hidden_tag() }}
+                                                {{final_approval_form.land_request_final_approval_btn(class="btn btn-primary")}}
+                                            </form>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="card p-3 mt-3" style="background-color: #93cea9;">
+                                        <div><i class="bi bi-rocket-takeoff fs-5"></i> Congratulations! The lease is now active and ready to begin.</div>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {%else%}
+                                <div class="proposal">
+                                    <form method="POST" action="{{ url_for('land.submit_agreement_proposal_as_owner', parcel_req_id=active_request_owner[0].application_id) }}" enctype="multipart/form-data">
+                                        {{ agreement_proposal_form.hidden_tag() }}
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <small class="text-muted">Lease From</small>{{agreement_proposal_form.land_agreement_lease_from_date(class="form-control")}}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <small class="text-muted">Lease To</small>{{agreement_proposal_form.land_agreement_lease_to_date(class="form-control")}}
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-6">
+                                                <small class="text-muted">Rent</small>
+                                                {{ agreement_proposal_form.land_agreement_rent(class="form-control") }}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <small class="text-muted">Pricing Modal</small>
+                                                {{ agreement_proposal_form.land_agreement_modal(class="form-control") }}
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-6">
+                                                <small class="text-muted">Security Amount</small>
+                                                {{ agreement_proposal_form.land_agreement_security(class="form-control")}}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <small class="text-muted">Land Use</small>
+                                                {{agreement_proposal_form.land_agreement_intended_use(class="form-control")}}
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md">
+                                                <small class="text-muted">Additional Notes</small>
+                                                {{ agreement_proposal_form.land_agreement_notes(class="form-control") }}
+                                            </div>
+                                        </div>
+                                        <div class="row my-2">
+                                            <div class="col-md-6">
+                                                <small class="text-muted">Agreement</small>
+                                                {{agreement_proposal_form.land_agreement_proposal_doc(class="form-control")}}
+                                            </div>
+                                        </div>
+                                        {{ agreement_proposal_form.land_agreement_proposal_btn(class="btn btn-primary") }}
+                                    </form>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="card p-3">
+                <div class="fs-5 mb-2">{{contact_details[0].land_parcel_name}}</div>
+                <div><i class="bi bi-person-lines-fill"></i> Applicant info</div>
+                <div>{{contact_details[0].tenant_first_name}} {{contact_details[0].tenant_last_name}}</div>
+                <div class="text-muted">{{contact_details[0].tenant_email}}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/leaflet_map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+
+{% endblock %}

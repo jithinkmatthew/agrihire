@@ -1,0 +1,128 @@
+{% macro equipment_preview_modal(equipment, equipments_files, safety_options_for_display) %}
+<div class="modal fade" id="previewModal_{{ equipment.equipment_id }}" data-lat="{{ equipment.latitude }}"
+     data-lon="{{ equipment.longitude }}" tabindex="-1"
+     aria-labelledby="previewModalLabel_{{ equipment.equipment_id }}" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="d-flex flex-column">
+          <h5 class="modal-title" id="previewModalLabel_{{ equipment.equipment_id }}">Equipment Preview </h5>
+          <small class="text-muted">How this listing will appear to customers</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% set eqp_img = equipments_files | selectattr('file_type', '==', 'image') 
+            | selectattr('equipment_id', '==', equipment.equipment_id) | list %}
+        {% for image in eqp_img %}
+        <div class="card rounded shadow-sm mb-3">
+          <div class="card-body bg-light p-0 rounded">
+            <img class="img-fluid preview-image rounded" src="{{ url_for('static', filename=image.file_path) }}"
+              alt="Equipment Image">
+          </div>
+        </div>
+        {% endfor %}
+        <h3 class="fw-bold text-dark">{{ equipment.name }}</h3>
+        <h5 class="text-dark text-muted">{{ equipment.make }} {{ equipment.model }} ({{ equipment.year }})</h5>
+        <div class="badge rounded-pill text-bg-dark">{{ equipment.category_name }}</div>
+        <h6 class="fw-bold text-dark mt-2">Description</h6>
+        <p>{{ equipment.description }}</p>
+        <h6 class="fw-bold text-dark mt-2"><i class="bi bi-filter-square"></i> Equipment Specification</h6>
+        <div class="d-flex gap-3">
+          <div class="card rounded shadow-sm">
+            <div class="card-body bg-light">
+              <small class="text-muted">Height</small>
+              <h6>{{ equipment.height | default('-', true) }}</h6>
+            </div>
+          </div>
+          <div class="card rounded shadow-sm">
+            <div class="card-body bg-light">
+              <small class="text-muted">Length</small>
+              <h6>{{ equipment.length | default('-', true) }}</h6>
+            </div>
+          </div>
+          <div class="card rounded shadow-sm">
+            <div class="card-body bg-light">
+              <small class="text-muted">Width</small>
+              <h6>{{ equipment.width | default('-', true) }}</h6>
+            </div>
+          </div>
+          <div class="card rounded shadow-sm">
+            <div class="card-body bg-light">
+              <small class="text-muted">Weight</small>
+              <h6>{{ equipment.weight | default('-', true) }}</h6>
+            </div>
+          </div>
+        </div>
+        <h6 class="fw-bold text-dark mt-2"><i class="bi bi-filter-square"></i> Price Details</h6>
+        <div class="d-flex gap-3">
+          <div class="card rounded shadow-sm">
+            <div class="card-body bg-light">
+              {% if equipment.price_modal == 'per_hour' %}
+              ${{ equipment.price }}/hour
+              {% elif equipment.price_modal == 'per_day' %}
+              ${{ equipment.price }}/day
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <h6 class="fw-bold text-dark mt-3"><i class="bi bi-shield"></i> Safety Requirements</h6>
+        {% set equip_safety_options = safety_options_for_display 
+            | selectattr('equipment_id', '==', equipment.equipment_id) | list %}
+        {% for safety_option in equip_safety_options %}
+        <div><i class="bi bi-check2-circle"></i> {{ safety_option.name }}</div>
+        {% endfor %}
+
+        <h6 class="fw-bold text-dark mt-3"><i class="bi bi-file-earmark-pdf"></i> Download Safety Docs</h6>
+        {% set safety_doc = equipments_files 
+            | selectattr('file_type', '==', 'safety_doc') 
+            | selectattr('equipment_id', '==', equipment.equipment_id) | list %}
+        {% for doc in safety_doc %}
+        <div class="card rounded shadow-sm mt-3">
+          <div class="card-body bg-light">
+            <a href="{{ url_for('static', filename=doc.file_path) }}" download>Download File</a>
+          </div>
+        </div>
+        {% endfor %}
+
+        <h6 class="fw-bold text-dark mt-3"><i class="bi bi-map"></i> Location Details</h6>
+        <div class="row">
+          <div class="col-6">
+            <small class="text-muted">Region</small>
+            <div>{{ equipment.region | default('-', true) }}</div>
+          </div>
+          <div class="col-6">
+            <small class="text-muted">District</small>
+            <div>{{ equipment.district | default('-', true) }}</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-6">
+            <small class="text-muted">Suburbs</small>
+            <div>{{ equipment.suburb | default('-', true) }}</div>
+          </div>
+          <div class="col-6">
+            <small class="text-muted">Street Name</small>
+            <div>{{ equipment.street_name | default('-', true) }}</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-6">
+            <small class="text-muted">City</small>
+            <div>{{ equipment.city | default('-', true) }}</div>
+          </div>
+          <div class="col-6">
+            <small class="text-muted">ZIP</small>
+            <div>{{ equipment.zip | default('-', true) }}</div>
+          </div>
+        </div>
+        <div id="map_{{ equipment.equipment_id }}" class="my-2 mapview rounded"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}

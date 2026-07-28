@@ -1,0 +1,139 @@
+{% macro rented_equipment_card(equipment, image_file=None, manage_request_form=manage_request_form, view_modal=True) %}
+<div class="col-md">
+  <div class="card m-4">
+    <div class="row g-0 rounded shadow">
+      <div class="col-md-4">
+        {% if image_file %}
+        <img class="card-img-top img-fluid rounded fixed-image"
+          src="{{ url_for('static', filename=image_file.file_path) }}" alt="Equipment Image" />
+        {% else %}
+        <img class="card-img-top img-fluid rounded fixed-image"
+          src="{{ url_for('static', filename='defaultimage.jpg') }}" alt="Equipment Image" />
+        {% endif %}
+      </div>
+      <div class="col-md-8">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{{ equipment.equipment_name }}</h5>
+          </div>
+          <div class="card-text">
+            <i class="bi bi-collection"></i> {{equipment.make}} {{equipment.model}} ({{equipment.year}})
+          </div>
+          <div class="mt-1">
+            {% if equipment.equipment_status %}
+            <span class="badge rounded-pill text-bg-dark"> {{ equipment.equipment_status | format_status}}</span>
+            {% endif %}
+          </div>
+          {% if equipment.price_modal == 'per_day' %}
+          <div class="mt-3">{{equipment.rental_duration}} Days</div>
+          <div><i class="bi bi-calendar-range"></i>
+            {{equipment.rental_start_date | dateformat}} to {{equipment.rental_end_date | dateformat}}
+          </div>
+          {% endif %}
+          {% if equipment.price_modal == 'per_hour' %}
+          <div class="mt-3">{{equipment.rental_duration}} Hours</div>
+          <div><i class="bi bi-clock"></i>
+            {{equipment.rental_start_time | timeformat}} to {{equipment.rental_end_time | timeformat}}
+          </div>
+          {% endif %}
+          <div class="card-text mt-1">
+            <small class="text-muted">Requested on: {{ equipment.transaction_date }} </small>
+          </div>
+          {% if view_modal == True %}
+          <div class="mt-4">
+            <a id="equip_preview" class="btn btn-sm btn-outline-primary preview-btn" data-bs-toggle="modal"
+              data-bs-target="#previewModalLabel_{{ equipment.equipment_id }}" data-id="{{ equipment.equipment_id }}"><i
+                class="bi bi-eye"></i> View & Manage Request</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="previewModalLabel_{{ equipment.equipment_id }}" tabindex="-1"
+    aria-labelledby="previewModalLabel_{{ equipment.equipment_id }}" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="d-flex flex-column">
+            <h5 class="modal-title" id="previewModalLabel_{{ equipment.equipment_id }}">View and Manage Rental Request</h5>
+            <small class="text-muted">Update request and view other details </small>
+          </div>
+        </div>
+        <div class="modal-body">
+          <h6 class="fw-light text-secondary">Rental Details</h6>
+          {% if equipment.price_modal == 'per_day' %}
+          <div><i class="bi bi-calendar-range"></i>
+            {{equipment.rental_start_date | dateformat}} to {{equipment.rental_end_date | dateformat}} ({{equipment.rental_duration}} Days)
+          </div>
+          {% endif %}
+          {% if equipment.price_modal == 'per_hour' %}
+          <div><i class="bi bi-calendar3-event"></i> {{equipment.rental_start_date | dateformat}}</div>
+          <div><i class="bi bi-clock"></i>
+            {{equipment.rental_start_time | timeformat}} to {{equipment.rental_end_time | timeformat}} ({{equipment.rental_duration}} Hours)
+          </div>
+          {% endif %}
+          {% if equipment.rental_delivery_option == 'address' %}
+          <div>
+            <i class="bi bi-truck"></i> <span class="badge text-bg-dark">Delivery</span> <i class="bi bi-pin-map"></i> Location: {{equipment.rental_delivery_address}}
+          </div>
+          {% else %}
+          <div><i class="bi bi-truck"></i> PickUp  <span>&nbsp;</span>   <i class="bi bi-pin-map"></i> Site Location: {{equipment.rental_delivery_address}} </div>
+          {% endif %}
+          <h6 class="fw-light text-secondary mt-3">Price BreakUp</h6>
+          <div class="row d-flex mt-1">
+            <div class="col-md-6">
+              {% if equipment.price_modal == 'per_day'%}
+              <div class="d-flex justify-content-between">
+                <div>Duration (Days)</div>
+                <div>{{equipment.rental_duration}}</div>
+              </div>
+              {% else %}
+              <div class="d-flex justify-content-between">
+                <div>Duration (Hours)</div>
+                <div>{{equipment.rental_duration}}</div>
+              </div>
+              {% endif %}
+              <div class="d-flex justify-content-between">
+                <div>Rate</div>
+                <div>{{equipment.price}}</div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <div>Sub Total</div>
+                <div>{{ "%.2f"|format(equipment.rental_duration * equipment.price) }}</div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <div>Delivery</div>
+                <div>{{equipment.rental_delivery_amount}}</div>
+              </div>
+              <hr class="my-1">
+              <div class="d-flex justify-content-between">
+                <div>Grant Total</div>
+                <div>{{equipment.transaction_amount}}</div>
+              </div>
+            </div>
+          </div>
+          <h6 class="fw-light text-secondary mt-3">Update Request Status</h6>
+          {% if manage_request_form %}
+          <div class="d-flex align-items-start mt-3">
+            <form method="POST" action="{{ url_for('equipment.update_equipment_request_as_owner', equip_req_id=equipment.request_id) }}">
+              {{ manage_request_form.hidden_tag() }}
+              <div class="row">
+                <div class="col-md-8">
+                  {{ manage_request_form.equipment_status(class="form-control") }}
+                </div>
+                <div class="col-md-4">
+                  {{ manage_request_form.update_status_btn(class="btn btn-primary")}}
+                </div>
+              </div>
+            </form>
+          </div>
+          {% endif %}
+
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %} {% block title %}Payment Page{% endblock %} {% block
+content %}
+
+<style>
+
+</style>
+
+<div class="row justify-content-center" style="align-items: center; display: flex;">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-body d-flex flex-column justify-content-center align-items-center" style="min-height: 200px;">
+        <h4 class="fw-bold text-dark text-center">Thank you for your Request.</h4>
+        <div class="text-center">
+          Your request has been successfully submitted.
+        </div>
+        <div class="text-center mt-4">
+          <a href="{{ url_for('land.view_land_requests_as_tenant') }}" class="nav-link text-decoration-underline"><i class="bi bi-box-seam-fill"></i> View Orders </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+
+{% endblock %}
