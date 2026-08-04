@@ -34,38 +34,6 @@ Wireframe design completed - Please [click here](docs/wireframe/AotearoaAgriHire
 
 User stories list - Please [click here](docs/user_stories/user_stories.pdf)
 
-
-## Setup and Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone 
-```
-
----
-### 2. Create a Virtual Environment
-```
-python3 -m venv venv
-source venv/bin/activate   # For Linux/Mac
-venv\Scripts\activate      # For Windows
-```
-
----
-### 3. Install Dependencies
-```
-pip install -r requirements.txt
-```
-
----
-### 4. Run the app
-```
-flask run
-```
-
-Visit: http://127.0.0.1:5000/
-
-
 ### Weather API
 
 The OpenWeatherMap 5-Day / 3-Hour Forecast API(5 Day Weather Forecast - OpenWeatherMap, n.d.) provides detailed weather predictions for any geographic location.
