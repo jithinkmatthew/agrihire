@@ -1,0 +1,56 @@
+# Environment variables (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python bytecode / cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python packaging
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Flask specific
+instance/
+.webassets-cache
+
+# Logs
+*.log
+
+# Database files (if using local SQLite for testing)
+*.sqlite3
+*.db
+
+# OS-generated files
+.DS_Store          # macOS
+Thumbs.db          # Windows
+desktop.ini        # Windows
+
+# Editor/IDE folders
+.vscode/
+.idea/
+*.swp
+
+# Sensitive files (like the key.txt issue from earlier)
+key.txt
+*.pem
+*.key
+
+# Jupyter notebook checkpoints (if used for data work)
+.ipynb_checkpoints/
+
+# Coverage/test reports
+.coverage
+htmlcov/
+.pytest_cache/
