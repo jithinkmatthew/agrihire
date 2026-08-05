@@ -1,6 +1,10 @@
-dbuser = 'root'
-dbpass = 'ytCr65^%$^%$^%$%^$lplp23'  # Production Server
-# dbpass = 'Test@123'  # Development Server
-dbhost = 'localhost'
-dbport = '3306'
-dbname = 'agrihire'
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+dbhost = os.getenv("DB_HOST")
+dbuser = os.getenv("DB_USER")
+dbpass = os.getenv("DB_PASSWORD")
+dbname = os.getenv("DB_NAME")
+dbport = os.getenv("DB_PORT")
